@@ -69,6 +69,16 @@ EXTRA_FLAGS += -Wdeclaration-after-statement
 EXTRA_FLAGS += -Wshadow
 # EXTRA_FLAGS += -Wvla
 
+# AVX2-specific flags:
+ifeq ($(HAVE_AVX2), 1)
+EXTRA_FLAGS += -DWEBP_HAVE_AVX2
+src/dsp/%_avx2.o: EXTRA_FLAGS += -mavx2
+endif
+
+# NEON-specific flags:
+# EXTRA_FLAGS += -march=armv7-a -mfloat-abi=hard -mfpu=neon -mtune=cortex-a8
+# -> seems to make the overall lib slower: -fno-split-wide-types
+
 #### Nothing should normally be changed below this line ####
 
 AR = ar
@@ -87,7 +97,6 @@ DEC_OBJS = \
     src/dec/frame.o \
     src/dec/idec.o \
     src/dec/io.o \
-    src/dec/layer.o \
     src/dec/quant.o \
     src/dec/tree.o \
     src/dec/vp8.o \
@@ -98,18 +107,28 @@ DEMUX_OBJS = \
     src/demux/demux.o \
 
 DSP_DEC_OBJS = \
+    src/dsp/alpha_processing.o \
     src/dsp/cpu.o \
     src/dsp/dec.o \
+    src/dsp/dec_clip_tables.o \
+    src/dsp/dec_mips32.o \
     src/dsp/dec_neon.o \
     src/dsp/dec_sse2.o \
     src/dsp/lossless.o \
+    src/dsp/lossless_mips32.o \
+    src/dsp/lossless_neon.o \
+    src/dsp/lossless_sse2.o \
     src/dsp/upsampling.o \
     src/dsp/upsampling_neon.o \
     src/dsp/upsampling_sse2.o \
     src/dsp/yuv.o \
+    src/dsp/yuv_mips32.o \
+    src/dsp/yuv_sse2.o \
 
 DSP_ENC_OBJS = \
     src/dsp/enc.o \
+    src/dsp/enc_avx2.o \
+    src/dsp/enc_mips32.o \
     src/dsp/enc_neon.o \
     src/dsp/enc_sse2.o \
 
@@ -123,8 +142,11 @@ ENC_OBJS = \
     src/enc/frame.o \
     src/enc/histogram.o \
     src/enc/iterator.o \
-    src/enc/layer.o \
     src/enc/picture.o \
+    src/enc/picture_csp.o \
+    src/enc/picture_psnr.o \
+    src/enc/picture_rescale.o \
+    src/enc/picture_tools.o \
     src/enc/quant.o \
     src/enc/syntax.o \
     src/enc/token.o \
@@ -137,6 +159,7 @@ EX_FORMAT_DEC_OBJS = \
     examples/metadata.o \
     examples/pngdec.o \
     examples/tiffdec.o \
+    examples/webpdec.o \
 
 EX_UTIL_OBJS = \
     examples/example_util.o \
@@ -150,7 +173,6 @@ MUX_OBJS = \
     src/mux/muxread.o \
 
 UTILS_DEC_OBJS = \
-    src/utils/alpha_processing.o \
     src/utils/bit_reader.o \
     src/utils/color_cache.o \
     src/utils/filters.o \
@@ -188,10 +210,15 @@ HDRS = \
     src/dec/webpi.h \
     src/dsp/dsp.h \
     src/dsp/lossless.h \
+    src/dsp/neon.h \
     src/dsp/yuv.h \
+    src/dsp/yuv_tables_sse2.h \
+    src/enc/backward_references.h \
     src/enc/cost.h \
+    src/enc/histogram.h \
     src/enc/vp8enci.h \
-    src/utils/alpha_processing.h \
+    src/enc/vp8li.h \
+    src/mux/muxi.h \
     src/utils/bit_reader.h \
     src/utils/bit_writer.h \
     src/utils/color_cache.h \
@@ -203,6 +230,7 @@ HDRS = \
     src/utils/random.h \
     src/utils/rescaler.h \
     src/utils/thread.h \
+    src/utils/utils.h \
     src/webp/format_constants.h \
     $(HDRS_INSTALLED) \
 
@@ -221,6 +249,14 @@ ex: $(OUT_EXAMPLES)
 all: ex $(EXTRA_EXAMPLES)
 
 $(EX_FORMAT_DEC_OBJS): %.o: %.h
+
+# special dependencies:
+#   tree.c/vp8.c/bit_reader.c <-> bit_reader_inl.h, endian_inl.h
+#   bit_writer.c <-> endian_inl.h
+src/dec/tree.o: src/utils/bit_reader_inl.h src/utils/endian_inl.h
+src/dec/vp8.o: src/utils/bit_reader_inl.h src/utils/endian_inl.h
+src/utils/bit_reader.o: src/utils/bit_reader_inl.h src/utils/endian_inl.h
+src/utils/bit_writer.o: src/utils/endian_inl.h
 
 %.o: %.c $(HDRS)
 	$(CC) $(CFLAGS) $(CPPFLAGS) -c $< -o $@
@@ -241,7 +277,7 @@ examples/gif2webp: examples/gif2webp.o
 examples/vwebp: examples/vwebp.o
 examples/webpmux: examples/webpmux.o
 
-examples/cwebp: src/libwebp.a
+examples/cwebp: examples/libexample_util.a src/libwebp.a
 examples/cwebp: EXTRA_LIBS += $(CWEBP_LIBS)
 examples/dwebp: examples/libexample_util.a src/libwebpdecoder.a
 examples/dwebp: EXTRA_LIBS += $(DWEBP_LIBS)
@@ -270,7 +306,7 @@ dist: all
 	$(INSTALL) -m644 src/demux/libwebpdemux.a $(DESTDIR)/lib
 	$(INSTALL) -m644 src/mux/libwebpmux.a $(DESTDIR)/lib
 	umask 022; \
-	for m in man/[cd]webp.1 man/gif2webp.1 man/webpmux.1; do \
+	for m in man/[cdv]webp.1 man/gif2webp.1 man/webpmux.1; do \
 	  basenam=$$(basename $$m .1); \
 	  $(GROFF) -t -e -man -T utf8 $$m \
 	    | $(COL) -bx >$(DESTDIR)/doc/$${basenam}.txt; \

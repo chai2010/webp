@@ -12,7 +12,7 @@
 #include "./pngdec.h"
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include "webp/config.h"
 #endif
 
 #include <stdio.h>
@@ -190,9 +190,9 @@ static int ExtractMetadataFromPNG(png_structp png,
 
 int ReadPNG(FILE* in_file, WebPPicture* const pic, int keep_alpha,
             Metadata* const metadata) {
-  png_structp png;
-  png_infop info = NULL;
-  png_infop end_info = NULL;
+  volatile png_structp png;
+  volatile png_infop info = NULL;
+  volatile png_infop end_info = NULL;
   int color_type, bit_depth, interlaced;
   int has_alpha;
   int num_passes;
@@ -200,7 +200,7 @@ int ReadPNG(FILE* in_file, WebPPicture* const pic, int keep_alpha,
   int ok = 0;
   png_uint_32 width, height, y;
   int stride;
-  uint8_t* rgb = NULL;
+  uint8_t* volatile rgb = NULL;
 
   png = png_create_read_struct(PNG_LIBPNG_VER_STRING, 0, 0, 0);
   if (png == NULL) {
@@ -211,7 +211,6 @@ int ReadPNG(FILE* in_file, WebPPicture* const pic, int keep_alpha,
   if (setjmp(png_jmpbuf(png))) {
  Error:
     MetadataFree(metadata);
-    png_destroy_read_struct(&png, &info, &end_info);
     goto End;
   }
 
@@ -228,7 +227,9 @@ int ReadPNG(FILE* in_file, WebPPicture* const pic, int keep_alpha,
 
   png_set_strip_16(png);
   png_set_packing(png);
-  if (color_type == PNG_COLOR_TYPE_PALETTE) png_set_palette_to_rgb(png);
+  if (color_type == PNG_COLOR_TYPE_PALETTE) {
+    png_set_palette_to_rgb(png);
+  }
   if (color_type == PNG_COLOR_TYPE_GRAY ||
       color_type == PNG_COLOR_TYPE_GRAY_ALPHA) {
     if (bit_depth < 8) {
@@ -255,7 +256,7 @@ int ReadPNG(FILE* in_file, WebPPicture* const pic, int keep_alpha,
   if (rgb == NULL) goto Error;
   for (p = 0; p < num_passes; ++p) {
     for (y = 0; y < height; ++y) {
-      png_bytep row = rgb + y * stride;
+      png_bytep row = (png_bytep)(rgb + y * stride);
       png_read_rows(png, &row, NULL, 1);
     }
   }
@@ -266,8 +267,6 @@ int ReadPNG(FILE* in_file, WebPPicture* const pic, int keep_alpha,
     fprintf(stderr, "Error extracting PNG metadata!\n");
     goto Error;
   }
-
-  png_destroy_read_struct(&png, &info, &end_info);
 
   pic->width = width;
   pic->height = height;
@@ -280,6 +279,10 @@ int ReadPNG(FILE* in_file, WebPPicture* const pic, int keep_alpha,
   }
 
  End:
+  if (png != NULL) {
+    png_destroy_read_struct((png_structpp)&png,
+                            (png_infopp)&info, (png_infopp)&end_info);
+  }
   free(rgb);
   return ok;
 }

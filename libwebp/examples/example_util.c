@@ -13,9 +13,45 @@
 #include "./example_util.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+#include "webp/decode.h"
+#include "./stopwatch.h"
 
 // -----------------------------------------------------------------------------
 // File I/O
+
+static const size_t kBlockSize = 16384;  // default initial size
+
+int ExUtilReadFromStdin(const uint8_t** data, size_t* data_size) {
+  size_t max_size = 0;
+  size_t size = 0;
+  uint8_t* input = NULL;
+
+  if (data == NULL || data_size == NULL) return 0;
+  *data = NULL;
+  *data_size = 0;
+
+  while (!feof(stdin)) {
+    // We double the buffer size each time and read as much as possible.
+    const size_t extra_size = (max_size == 0) ? kBlockSize : max_size;
+    void* const new_data = realloc(input, max_size + extra_size);
+    if (new_data == NULL) goto Error;
+    input = (uint8_t*)new_data;
+    max_size += extra_size;
+    size += fread(input + size, 1, extra_size, stdin);
+    if (size < max_size) break;
+  }
+  if (ferror(stdin)) goto Error;
+  *data = input;
+  *data_size = size;
+  return 1;
+
+ Error:
+  free(input);
+  fprintf(stderr, "Could not read from stdin\n");
+  return 0;
+}
 
 int ExUtilReadFile(const char* const file_name,
                    const uint8_t** data, size_t* data_size) {
@@ -23,8 +59,11 @@ int ExUtilReadFile(const char* const file_name,
   void* file_data;
   size_t file_size;
   FILE* in;
+  const int from_stdin = (file_name == NULL) || !strcmp(file_name, "-");
 
-  if (file_name == NULL || data == NULL || data_size == NULL) return 0;
+  if (from_stdin) return ExUtilReadFromStdin(data, data_size);
+
+  if (data == NULL || data_size == NULL) return 0;
   *data = NULL;
   *data_size = 0;
 
@@ -56,17 +95,119 @@ int ExUtilWriteFile(const char* const file_name,
                     const uint8_t* data, size_t data_size) {
   int ok;
   FILE* out;
+  const int to_stdout = (file_name == NULL) || !strcmp(file_name, "-");
 
-  if (file_name == NULL || data == NULL) {
+  if (data == NULL) {
     return 0;
   }
-  out = fopen(file_name, "wb");
+  out = to_stdout ? stdout : fopen(file_name, "wb");
   if (out == NULL) {
     fprintf(stderr, "Error! Cannot open output file '%s'\n", file_name);
     return 0;
   }
   ok = (fwrite(data, data_size, 1, out) == 1);
-  fclose(out);
+  if (out != stdout) fclose(out);
   return ok;
 }
 
+//------------------------------------------------------------------------------
+// WebP decoding
+
+static const char* const kStatusMessages[VP8_STATUS_NOT_ENOUGH_DATA + 1] = {
+  "OK", "OUT_OF_MEMORY", "INVALID_PARAM", "BITSTREAM_ERROR",
+  "UNSUPPORTED_FEATURE", "SUSPENDED", "USER_ABORT", "NOT_ENOUGH_DATA"
+};
+
+static void PrintAnimationWarning(const WebPDecoderConfig* const config) {
+  if (config->input.has_animation) {
+    fprintf(stderr,
+            "Error! Decoding of an animated WebP file is not supported.\n"
+            "       Use webpmux to extract the individual frames or\n"
+            "       vwebp to view this image.\n");
+  }
+}
+
+void ExUtilPrintWebPError(const char* const in_file, int status) {
+  fprintf(stderr, "Decoding of %s failed.\n", in_file);
+  fprintf(stderr, "Status: %d", status);
+  if (status >= VP8_STATUS_OK && status <= VP8_STATUS_NOT_ENOUGH_DATA) {
+    fprintf(stderr, "(%s)", kStatusMessages[status]);
+  }
+  fprintf(stderr, "\n");
+}
+
+int ExUtilLoadWebP(const char* const in_file,
+                   const uint8_t** data, size_t* data_size,
+                   WebPBitstreamFeatures* bitstream) {
+  VP8StatusCode status;
+  WebPBitstreamFeatures local_features;
+  if (!ExUtilReadFile(in_file, data, data_size)) return 0;
+
+  if (bitstream == NULL) {
+    bitstream = &local_features;
+  }
+
+  status = WebPGetFeatures(*data, *data_size, bitstream);
+  if (status != VP8_STATUS_OK) {
+    free((void*)*data);
+    *data = NULL;
+    *data_size = 0;
+    ExUtilPrintWebPError(in_file, status);
+    return 0;
+  }
+  return 1;
+}
+
+//------------------------------------------------------------------------------
+
+VP8StatusCode ExUtilDecodeWebP(const uint8_t* const data, size_t data_size,
+                               int verbose, WebPDecoderConfig* const config) {
+  Stopwatch stop_watch;
+  VP8StatusCode status = VP8_STATUS_OK;
+  if (config == NULL) return VP8_STATUS_INVALID_PARAM;
+
+  PrintAnimationWarning(config);
+
+  StopwatchReset(&stop_watch);
+
+  // Decoding call.
+  status = WebPDecode(data, data_size, config);
+
+  if (verbose) {
+    const double decode_time = StopwatchReadAndReset(&stop_watch);
+    fprintf(stderr, "Time to decode picture: %.3fs\n", decode_time);
+  }
+  return status;
+}
+
+VP8StatusCode ExUtilDecodeWebPIncremental(
+    const uint8_t* const data, size_t data_size,
+    int verbose, WebPDecoderConfig* const config) {
+  Stopwatch stop_watch;
+  VP8StatusCode status = VP8_STATUS_OK;
+  if (config == NULL) return VP8_STATUS_INVALID_PARAM;
+
+  PrintAnimationWarning(config);
+
+  StopwatchReset(&stop_watch);
+
+  // Decoding call.
+  {
+    WebPIDecoder* const idec = WebPIDecode(data, data_size, config);
+    if (idec == NULL) {
+      fprintf(stderr, "Failed during WebPINewDecoder().\n");
+      return VP8_STATUS_OUT_OF_MEMORY;
+    } else {
+      status = WebPIUpdate(idec, data, data_size);
+      WebPIDelete(idec);
+    }
+  }
+
+  if (verbose) {
+    const double decode_time = StopwatchReadAndReset(&stop_watch);
+    fprintf(stderr, "Time to decode picture: %.3fs\n", decode_time);
+  }
+  return status;
+}
+
+// -----------------------------------------------------------------------------

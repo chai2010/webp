@@ -17,7 +17,7 @@
 #include <string.h>
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include "webp/config.h"
 #endif
 
 #ifdef WEBP_HAVE_PNG
@@ -552,28 +552,29 @@ static void Help(void) {
          "  -yuv ......... save the raw YUV samples in flat layout\n"
          "\n"
          " Other options are:\n"
-         "  -version  .... print version number and exit.\n"
-         "  -nofancy ..... don't use the fancy YUV420 upscaler.\n"
-         "  -nofilter .... disable in-loop filtering.\n"
-         "  -nodither .... disable dithering.\n"
+         "  -version  .... print version number and exit\n"
+         "  -nofancy ..... don't use the fancy YUV420 upscaler\n"
+         "  -nofilter .... disable in-loop filtering\n"
+         "  -nodither .... disable dithering\n"
          "  -dither <d> .. dithering strength (in 0..100)\n"
+#if WEBP_DECODER_ABI_VERSION > 0x0203
+         "  -alpha_dither  use alpha-plane dithering if needed\n"
+#endif
          "  -mt .......... use multi-threading\n"
          "  -crop <x> <y> <w> <h> ... crop output with the given rectangle\n"
          "  -scale <w> <h> .......... scale the output (*after* any cropping)\n"
-         "  -alpha ....... only save the alpha plane.\n"
+#if WEBP_DECODER_ABI_VERSION > 0x0203
+         "  -flip ........ flip the output vertically\n"
+#endif
+         "  -alpha ....... only save the alpha plane\n"
          "  -incremental . use incremental decoding (useful for tests)\n"
-         "  -h     ....... this help message.\n"
+         "  -h     ....... this help message\n"
          "  -v     ....... verbose (e.g. print encoding/decoding times)\n"
 #ifndef WEBP_DLL
-         "  -noasm ....... disable all assembly optimizations.\n"
+         "  -noasm ....... disable all assembly optimizations\n"
 #endif
         );
 }
-
-static const char* const kStatusMessages[] = {
-  "OK", "OUT_OF_MEMORY", "INVALID_PARAM", "BITSTREAM_ERROR",
-  "UNSUPPORTED_FEATURE", "SUSPENDED", "USER_ABORT", "NOT_ENOUGH_DATA"
-};
 
 static const char* const kFormatType[] = {
   "unspecified", "lossy", "lossless"
@@ -627,6 +628,10 @@ int main(int argc, const char *argv[]) {
       format = YUV;
     } else if (!strcmp(argv[c], "-mt")) {
       config.options.use_threads = 1;
+#if WEBP_DECODER_ABI_VERSION > 0x0203
+    } else if (!strcmp(argv[c], "-alpha_dither")) {
+      config.options.alpha_dithering_strength = 100;
+#endif
     } else if (!strcmp(argv[c], "-nodither")) {
       config.options.dithering_strength = 0;
     } else if (!strcmp(argv[c], "-dither") && c < argc - 1) {
@@ -641,6 +646,10 @@ int main(int argc, const char *argv[]) {
       config.options.use_scaling = 1;
       config.options.scaled_width  = strtol(argv[++c], NULL, 0);
       config.options.scaled_height = strtol(argv[++c], NULL, 0);
+#if WEBP_DECODER_ABI_VERSION > 0x0203
+    } else if (!strcmp(argv[c], "-flip")) {
+      config.options.flip = 1;
+#endif
     } else if (!strcmp(argv[c], "-v")) {
       verbose = 1;
 #ifndef WEBP_DLL
@@ -668,27 +677,11 @@ int main(int argc, const char *argv[]) {
   }
 
   {
-    Stopwatch stop_watch;
     VP8StatusCode status = VP8_STATUS_OK;
     size_t data_size = 0;
     const uint8_t* data = NULL;
-
-    if (!ExUtilReadFile(in_file, &data, &data_size)) return -1;
-
-    if (verbose) {
-      StopwatchReset(&stop_watch);
-    }
-
-    status = WebPGetFeatures(data, data_size, bitstream);
-    if (status != VP8_STATUS_OK) {
-      goto end;
-    }
-
-    if (bitstream->has_animation) {
-      fprintf(stderr,
-              "Error! Decoding of an animated WebP file is not supported.\n"
-              "       Use webpmux to extract the individual frames or\n"
-              "       vwebp to view this image.\n");
+    if (!ExUtilLoadWebP(in_file, &data, &data_size, bitstream)) {
+      return -1;
     }
 
     switch (format) {
@@ -724,31 +717,16 @@ int main(int argc, const char *argv[]) {
         return -1;
     }
 
-    // Decoding call.
-    if (!incremental) {
-      status = WebPDecode(data, data_size, &config);
+    if (incremental) {
+      status = ExUtilDecodeWebPIncremental(data, data_size, verbose, &config);
     } else {
-      WebPIDecoder* const idec = WebPIDecode(data, data_size, &config);
-      if (idec == NULL) {
-        fprintf(stderr, "Failed during WebPINewDecoder().\n");
-        status = VP8_STATUS_OUT_OF_MEMORY;
-        goto end;
-      } else {
-        status = WebPIUpdate(idec, data, data_size);
-        WebPIDelete(idec);
-      }
+      status = ExUtilDecodeWebP(data, data_size, verbose, &config);
     }
 
-    if (verbose) {
-      const double decode_time = StopwatchReadAndReset(&stop_watch);
-      fprintf(stderr, "Time to decode picture: %.3fs\n", decode_time);
-    }
- end:
     free((void*)data);
     ok = (status == VP8_STATUS_OK);
     if (!ok) {
-      fprintf(stderr, "Decoding of %s failed.\n", in_file);
-      fprintf(stderr, "Status: %d (%s)\n", status, kStatusMessages[status]);
+      ExUtilPrintWebPError(in_file, status);
       goto Exit;
     }
   }

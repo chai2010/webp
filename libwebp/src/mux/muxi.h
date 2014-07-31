@@ -28,7 +28,7 @@ extern "C" {
 
 #define MUX_MAJ_VERSION 0
 #define MUX_MIN_VERSION 2
-#define MUX_REV_VERSION 0
+#define MUX_REV_VERSION 1
 
 // Chunk object.
 typedef struct WebPChunk WebPChunk;
@@ -65,7 +65,9 @@ struct WebPMux {
   WebPChunk*      anim_;
   WebPChunk*      vp8x_;
 
-  WebPChunk*  unknown_;
+  WebPChunk*      unknown_;
+  int             canvas_width_;
+  int             canvas_height_;
 };
 
 // CHUNK_INDEX enum: used for indexing within 'kChunks' (defined below) only.

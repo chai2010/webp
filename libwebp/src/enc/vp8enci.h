@@ -30,7 +30,7 @@ extern "C" {
 // version numbers
 #define ENC_MAJ_VERSION 0
 #define ENC_MIN_VERSION 4
-#define ENC_REV_VERSION 0
+#define ENC_REV_VERSION 1
 
 // intra prediction modes
 enum { B_DC_PRED = 0,   // 4x4 modes
@@ -130,8 +130,8 @@ typedef enum {   // Rate-distortion optimization levels
 #define ALIGN_CST 15
 #define DO_ALIGN(PTR) ((uintptr_t)((PTR) + ALIGN_CST) & ~ALIGN_CST)
 
-extern const int VP8Scan[16 + 4 + 4];           // in quant.c
-extern const int VP8UVModeOffsets[4];           // in analyze.c
+extern const int VP8Scan[16];           // in quant.c
+extern const int VP8UVModeOffsets[4];   // in analyze.c
 extern const int VP8I16ModeOffsets[4];
 extern const int VP8I4ModeOffsets[NUM_BMODES];
 
@@ -160,14 +160,16 @@ extern const int VP8I4ModeOffsets[NUM_BMODES];
 #define I4TMP (6 * 16 * BPS + 8 * BPS +  8)
 
 typedef int64_t score_t;     // type used for scores, rate, distortion
+// Note that MAX_COST is not the maximum allowed by sizeof(score_t),
+// in order to allow overflowing computations.
 #define MAX_COST ((score_t)0x7fffffffffffffLL)
 
 #define QFIX 17
 #define BIAS(b)  ((b) << (QFIX - 8))
 // Fun fact: this is the _only_ line where we're actually being lossy and
 // discarding bits.
-static WEBP_INLINE int QUANTDIV(int n, int iQ, int B) {
-  return (n * iQ + B) >> QFIX;
+static WEBP_INLINE int QUANTDIV(uint32_t n, uint32_t iQ, uint32_t B) {
+  return (int)((n * iQ + B) >> QFIX);
 }
 
 // size of histogram used by CollectHistogram.
@@ -204,9 +206,9 @@ typedef struct {
 typedef struct {
   uint8_t segments_[3];     // probabilities for segment tree
   uint8_t skip_proba_;      // final probability of being skipped.
-  ProbaArray coeffs_[NUM_TYPES][NUM_BANDS];      // 924 bytes
+  ProbaArray coeffs_[NUM_TYPES][NUM_BANDS];      // 1056 bytes
   StatsArray stats_[NUM_TYPES][NUM_BANDS];       // 4224 bytes
-  CostArray level_cost_[NUM_TYPES][NUM_BANDS];   // 11.4k
+  CostArray level_cost_[NUM_TYPES][NUM_BANDS];   // 13056 bytes
   int dirty_;               // if true, need to call VP8CalculateLevelCosts()
   int use_skip_proba_;      // Note: we always use skip_proba for now.
   int nb_skip_;             // number of skipped blocks
@@ -236,8 +238,8 @@ typedef struct {
 typedef struct VP8Matrix {
   uint16_t q_[16];        // quantizer steps
   uint16_t iq_[16];       // reciprocals, fixed point.
-  uint16_t bias_[16];     // rounding bias
-  uint16_t zthresh_[16];  // value under which a coefficient is zeroed
+  uint32_t bias_[16];     // rounding bias
+  uint32_t zthresh_[16];  // value below which a coefficient is zeroed
   uint16_t sharpen_[16];  // frequency boosters for slight sharpening
 } VP8Matrix;
 
@@ -361,12 +363,14 @@ typedef struct {
   VP8Tokens* pages_;        // first page
   VP8Tokens** last_page_;   // last page
   uint16_t* tokens_;        // set to (*last_page_)->tokens_
-  int left_;          // how many free tokens left before the page is full.
+  int left_;                // how many free tokens left before the page is full
+  int page_size_;           // number of tokens per page
 #endif
   int error_;         // true in case of malloc error
 } VP8TBuffer;
 
-void VP8TBufferInit(VP8TBuffer* const b);    // initialize an empty buffer
+// initialize an empty buffer
+void VP8TBufferInit(VP8TBuffer* const b, int page_size);
 void VP8TBufferClear(VP8TBuffer* const b);   // de-allocate pages memory
 
 #if !defined(DISABLE_TOKEN_BUFFER)
@@ -421,12 +425,6 @@ struct VP8Encoder {
   uint8_t* alpha_data_;       // non-NULL if transparency is present
   uint32_t alpha_data_size_;
   WebPWorker alpha_worker_;
-
-  // enhancement layer
-  int use_layer_;
-  VP8BitWriter layer_bw_;
-  uint8_t* layer_data_;
-  size_t layer_data_size_;
 
   // quantization info (one set of DC/AC dequant factor per segment)
   VP8SegmentInfo dqm_[NUM_MB_SEGMENTS];
@@ -533,12 +531,6 @@ int VP8EncStartAlpha(VP8Encoder* const enc);    // start alpha coding process
 int VP8EncFinishAlpha(VP8Encoder* const enc);   // finalize compressed data
 int VP8EncDeleteAlpha(VP8Encoder* const enc);   // delete compressed data
 
-  // in layer.c
-void VP8EncInitLayer(VP8Encoder* const enc);     // init everything
-void VP8EncCodeLayerBlock(VP8EncIterator* it);   // code one more macroblock
-int VP8EncFinishLayer(VP8Encoder* const enc);    // finalize coding
-void VP8EncDeleteLayer(VP8Encoder* enc);         // reclaim memory
-
   // in filter.c
 
 // SSIM utils
@@ -561,7 +553,27 @@ void VP8AdjustFilterStrength(VP8EncIterator* const it);
 // step of 'delta', given a sharpness parameter 'sharpness'.
 int VP8FilterStrengthFromDelta(int sharpness, int delta);
 
+  // misc utils for picture_*.c:
+
+// Remove reference to the ARGB/YUVA buffer (doesn't free anything).
+void WebPPictureResetBuffers(WebPPicture* const picture);
+
+// Allocates ARGB buffer of given dimension (previous one is always free'd).
+// Preserves the YUV(A) buffer. Returns false in case of error (invalid param,
+// out-of-memory).
+int WebPPictureAllocARGB(WebPPicture* const picture, int width, int height);
+
+// Allocates YUVA buffer of given dimension (previous one is always free'd).
+// Uses picture->csp to determine whether an alpha buffer is needed.
+// Preserves the ARGB buffer.
+// Returns false in case of error (invalid param, out-of-memory).
+int WebPPictureAllocYUVA(WebPPicture* const picture, int width, int height);
+
 //------------------------------------------------------------------------------
+
+#if WEBP_ENCODER_ABI_VERSION <= 0x0202
+void WebPMemoryWriterClear(WebPMemoryWriter* writer);
+#endif
 
 #ifdef __cplusplus
 }    // extern "C"

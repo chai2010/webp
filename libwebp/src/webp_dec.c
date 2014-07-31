@@ -7,7 +7,6 @@
 #include "./dec/frame.c"
 #include "./dec/idec.c"
 #include "./dec/io.c"
-#include "./dec/layer.c"
 #include "./dec/quant.c"
 #include "./dec/tree.c"
 #include "./dec/vp8.c"

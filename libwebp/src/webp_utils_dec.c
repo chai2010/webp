@@ -2,7 +2,6 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-#include "./utils/alpha_processing.c"
 #include "./utils/bit_reader.c"
 #include "./utils/color_cache.c"
 #include "./utils/filters.c"

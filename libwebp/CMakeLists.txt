@@ -24,7 +24,8 @@ endif()
 
 # Extra flags to enable experimental features and code
 add_definitions(
-  -DWEBP_EXPERIMENTAL_FEATURES
+  #-DWEBP_EXPERIMENTAL_FEATURES
+  #-DWEBP_HAVE_AVX2
 )
 
 include_directories(AFTER
@@ -39,7 +40,6 @@ set(WEBP_DEC_SRC
   ./src/dec/frame.c
   ./src/dec/idec.c
   ./src/dec/io.c
-  ./src/dec/layer.c
   ./src/dec/quant.c
   ./src/dec/tree.c
   ./src/dec/vp8.c
@@ -52,19 +52,29 @@ set(WEBP_DEMUX_SRC
 )
 
 set(WEBP_DSP_DEC_SRC
+  ./src/dsp/alpha_processing.c
   ./src/dsp/cpu.c
   ./src/dsp/dec.c
+  ./src/dsp/dec_clip_tables.c
+  ./src/dsp/dec_mips32.c
   ./src/dsp/dec_neon.c
   ./src/dsp/dec_sse2.c
   ./src/dsp/lossless.c
+  ./src/dsp/lossless_mips32.c
+  ./src/dsp/lossless_neon.c
+  ./src/dsp/lossless_sse2.c
   ./src/dsp/upsampling.c
   ./src/dsp/upsampling_neon.c
   ./src/dsp/upsampling_sse2.c
   ./src/dsp/yuv.c
+  ./src/dsp/yuv_mips32.c
+  ./src/dsp/yuv_sse2.c
 )
 
 set(WEBP_DSP_ENC_SRC
   ./src/dsp/enc.c
+  ./src/dsp/enc_avx2.c
+  ./src/dsp/enc_mips32.c
   ./src/dsp/enc_neon.c
   ./src/dsp/enc_sse2.c
 )
@@ -74,6 +84,7 @@ set(WEBP_EX_FORMAT_DEC_SRC
   ./examples/metadata.c
   ./examples/pngdec.c
   ./examples/tiffdec.c
+  ./examples/webpdec.c
   ./examples/wicdec.c
 )
 
@@ -91,8 +102,11 @@ set(WEBP_ENC_SRC
   ./src/enc/frame.c
   ./src/enc/histogram.c
   ./src/enc/iterator.c
-  ./src/enc/layer.c
   ./src/enc/picture.c
+  ./src/enc/picture_csp.c
+  ./src/enc/picture_psnr.c
+  ./src/enc/picture_rescale.c
+  ./src/enc/picture_tools.c
   ./src/enc/quant.c
   ./src/enc/syntax.c
   ./src/enc/token.c
@@ -108,7 +122,6 @@ set(WEBP_MUX_SRC
 )
 
 set(WEBP_UTILS_DEC_SRC
-  ./src/utils/alpha_processing.c
   ./src/utils/bit_reader.c
   ./src/utils/color_cache.c
   ./src/utils/filters.c
@@ -145,6 +158,19 @@ set(WEBP_SRC
   ./src/enc/quant.c
   ./src/enc/frame.c
   ./src/enc/webpenc.c
+  ./src/enc/picture_csp.c
+  ./src/enc/picture_tools.c
+  ./src/enc/histogram.c
+
+  ./src/dsp/dec.c
+  ./src/dsp/dec_sse2.c
+  ./src/dsp/lossless.c
+  ./src/dsp/lossless_sse2.c
+  ./src/dsp/upsampling.c
+  ./src/dsp/upsampling_sse2.c
+  ./src/dsp/enc.c
+  ./src/dsp/enc_sse2.c
+
 
   #${WEBP_DEC_SRC}
   #${WEBP_DEMUX_SRC}

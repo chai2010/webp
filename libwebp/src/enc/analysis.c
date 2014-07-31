@@ -30,7 +30,7 @@ static void SmoothSegmentMap(VP8Encoder* const enc) {
   const int w = enc->mb_w_;
   const int h = enc->mb_h_;
   const int majority_cnt_3_x_3_grid = 5;
-  uint8_t* const tmp = (uint8_t*)WebPSafeMalloc((uint64_t)w * h, sizeof(*tmp));
+  uint8_t* const tmp = (uint8_t*)WebPSafeMalloc(w * h, sizeof(*tmp));
   assert((uint64_t)(w * h) == (uint64_t)w * h);   // no overflow, as per spec
 
   if (tmp == NULL) return;
@@ -63,7 +63,7 @@ static void SmoothSegmentMap(VP8Encoder* const enc) {
       mb->segment_ = tmp[x + y * w];
     }
   }
-  free(tmp);
+  WebPSafeFree(tmp);
 }
 
 //------------------------------------------------------------------------------
@@ -151,6 +151,7 @@ static void AssignSegments(VP8Encoder* const enc,
   int accum[NUM_MB_SEGMENTS], dist_accum[NUM_MB_SEGMENTS];
 
   assert(nb >= 1);
+  assert(nb <= NUM_MB_SEGMENTS);
 
   // bracket the input
   for (n = 0; n <= MAX_ALPHA && alphas[n] == 0; ++n) {}
@@ -225,18 +226,15 @@ static void AssignSegments(VP8Encoder* const enc,
 // susceptibility and set best modes for this macroblock.
 // Segment assignment is done later.
 
-// Number of modes to inspect for alpha_ evaluation. For high-quality settings
-// (method >= FAST_ANALYSIS_METHOD) we don't need to test all the possible modes
-// during the analysis phase.
-#define FAST_ANALYSIS_METHOD 4  // method above which we do partial analysis
+// Number of modes to inspect for alpha_ evaluation. We don't need to test all
+// the possible modes during the analysis phase: we risk falling into a local
+// optimum, or be subject to boundary effect
 #define MAX_INTRA16_MODE 2
 #define MAX_INTRA4_MODE  2
 #define MAX_UV_MODE      2
 
 static int MBAnalyzeBestIntra16Mode(VP8EncIterator* const it) {
-  const int max_mode =
-      (it->enc_->method_ >= FAST_ANALYSIS_METHOD) ? MAX_INTRA16_MODE
-                                                  : NUM_PRED_MODES;
+  const int max_mode = MAX_INTRA16_MODE;
   int mode;
   int best_alpha = DEFAULT_ALPHA;
   int best_mode = 0;
@@ -262,9 +260,7 @@ static int MBAnalyzeBestIntra16Mode(VP8EncIterator* const it) {
 static int MBAnalyzeBestIntra4Mode(VP8EncIterator* const it,
                                    int best_alpha) {
   uint8_t modes[16];
-  const int max_mode =
-      (it->enc_->method_ >= FAST_ANALYSIS_METHOD) ? MAX_INTRA4_MODE
-                                                  : NUM_BMODES;
+  const int max_mode = MAX_INTRA4_MODE;
   int i4_alpha;
   VP8Histogram total_histo = { { 0 } };
   int cur_histo = 0;
@@ -306,10 +302,9 @@ static int MBAnalyzeBestIntra4Mode(VP8EncIterator* const it,
 static int MBAnalyzeBestUVMode(VP8EncIterator* const it) {
   int best_alpha = DEFAULT_ALPHA;
   int best_mode = 0;
-  const int max_mode =
-      (it->enc_->method_ >= FAST_ANALYSIS_METHOD) ? MAX_UV_MODE
-                                                  : NUM_PRED_MODES;
+  const int max_mode = MAX_UV_MODE;
   int mode;
+
   VP8MakeChroma8Preds(it);
   for (mode = 0; mode < max_mode; ++mode) {
     VP8Histogram histo = { { 0 } };
@@ -425,7 +420,7 @@ static void MergeJobs(const SegmentJob* const src, SegmentJob* const dst) {
 // initialize the job struct with some TODOs
 static void InitSegmentJob(VP8Encoder* const enc, SegmentJob* const job,
                            int start_row, int end_row) {
-  WebPWorkerInit(&job->worker);
+  WebPGetWorkerInterface()->Init(&job->worker);
   job->worker.data1 = job;
   job->worker.data2 = &job->it;
   job->worker.hook = (WebPWorkerHook)DoSegmentsJob;
@@ -458,6 +453,8 @@ int VP8EncAnalyze(VP8Encoder* const enc) {
 #else
     const int do_mt = 0;
 #endif
+    const WebPWorkerInterface* const worker_interface =
+        WebPGetWorkerInterface();
     SegmentJob main_job;
     if (do_mt) {
       SegmentJob side_job;
@@ -467,23 +464,23 @@ int VP8EncAnalyze(VP8Encoder* const enc) {
       InitSegmentJob(enc, &side_job, split_row, last_row);
       // we don't need to call Reset() on main_job.worker, since we're calling
       // WebPWorkerExecute() on it
-      ok &= WebPWorkerReset(&side_job.worker);
+      ok &= worker_interface->Reset(&side_job.worker);
       // launch the two jobs in parallel
       if (ok) {
-        WebPWorkerLaunch(&side_job.worker);
-        WebPWorkerExecute(&main_job.worker);
-        ok &= WebPWorkerSync(&side_job.worker);
-        ok &= WebPWorkerSync(&main_job.worker);
+        worker_interface->Launch(&side_job.worker);
+        worker_interface->Execute(&main_job.worker);
+        ok &= worker_interface->Sync(&side_job.worker);
+        ok &= worker_interface->Sync(&main_job.worker);
       }
-      WebPWorkerEnd(&side_job.worker);
+      worker_interface->End(&side_job.worker);
       if (ok) MergeJobs(&side_job, &main_job);  // merge results together
     } else {
       // Even for single-thread case, we use the generic Worker tools.
       InitSegmentJob(enc, &main_job, 0, last_row);
-      WebPWorkerExecute(&main_job.worker);
-      ok &= WebPWorkerSync(&main_job.worker);
+      worker_interface->Execute(&main_job.worker);
+      ok &= worker_interface->Sync(&main_job.worker);
     }
-    WebPWorkerEnd(&main_job.worker);
+    worker_interface->End(&main_job.worker);
     if (ok) {
       enc->alpha_ = main_job.alpha / total_mb;
       enc->uv_alpha_ = main_job.uv_alpha / total_mb;

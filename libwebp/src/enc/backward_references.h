@@ -113,36 +113,96 @@ static WEBP_INLINE uint32_t PixOrCopyDistance(const PixOrCopy* const p) {
 }
 
 // -----------------------------------------------------------------------------
-// VP8LBackwardRefs
+// VP8LHashChain
 
+#define HASH_BITS 18
+#define HASH_SIZE (1 << HASH_BITS)
+
+typedef struct VP8LHashChain VP8LHashChain;
+struct VP8LHashChain {
+  // Stores the most recently added position with the given hash value.
+  int32_t hash_to_first_index_[HASH_SIZE];
+  // chain_[pos] stores the previous position with the same hash value
+  // for every pixel in the image.
+  int32_t* chain_;
+  // This is the maximum size of the hash_chain that can be constructed.
+  // Typically this is the pixel count (width x height) for a given image.
+  int size_;
+};
+
+// Must be called first, to set size.
+int VP8LHashChainInit(VP8LHashChain* const p, int size);
+void VP8LHashChainClear(VP8LHashChain* const p);  // release memory
+
+// -----------------------------------------------------------------------------
+// VP8LBackwardRefs (block-based backward-references storage)
+
+// maximum number of reference blocks the image will be segmented into
+#define MAX_REFS_BLOCK_PER_IMAGE 16
+
+typedef struct PixOrCopyBlock PixOrCopyBlock;   // forward declaration
+typedef struct VP8LBackwardRefs VP8LBackwardRefs;
+
+// Container for blocks chain
+struct VP8LBackwardRefs {
+  int block_size_;               // common block-size
+  int error_;                    // set to true if some memory error occurred
+  PixOrCopyBlock* refs_;         // list of currently used blocks
+  PixOrCopyBlock** tail_;        // for list recycling
+  PixOrCopyBlock* free_blocks_;  // free-list
+  PixOrCopyBlock* last_block_;   // used for adding new refs (internal)
+};
+
+// Initialize the object. 'block_size' is the common block size to store
+// references (typically, width * height / MAX_REFS_BLOCK_PER_IMAGE).
+void VP8LBackwardRefsInit(VP8LBackwardRefs* const refs, int block_size);
+// Release memory for backward references.
+void VP8LBackwardRefsClear(VP8LBackwardRefs* const refs);
+// Copies the 'src' backward refs to the 'dst'. Returns 0 in case of error.
+int VP8LBackwardRefsCopy(const VP8LBackwardRefs* const src,
+                         VP8LBackwardRefs* const dst);
+
+// Cursor for iterating on references content
 typedef struct {
-  PixOrCopy* refs;
-  int size;      // currently used
-  int max_size;  // maximum capacity
-} VP8LBackwardRefs;
+  // public:
+  PixOrCopy* cur_pos;           // current position
+  // private:
+  PixOrCopyBlock* cur_block_;   // current block in the refs list
+  const PixOrCopy* last_pos_;   // sentinel for switching to next block
+} VP8LRefsCursor;
 
-// Initialize the object. Must be called first. 'refs' can be NULL.
-void VP8LInitBackwardRefs(VP8LBackwardRefs* const refs);
-
-// Release memory and re-initialize the object. 'refs' can be NULL.
-void VP8LClearBackwardRefs(VP8LBackwardRefs* const refs);
-
-// Allocate 'max_size' references. Returns false in case of memory error.
-int VP8LBackwardRefsAlloc(VP8LBackwardRefs* const refs, int max_size);
+// Returns a cursor positioned at the beginning of the references list.
+VP8LRefsCursor VP8LRefsCursorInit(const VP8LBackwardRefs* const refs);
+// Returns true if cursor is pointing at a valid position.
+static WEBP_INLINE int VP8LRefsCursorOk(const VP8LRefsCursor* const c) {
+  return (c->cur_pos != NULL);
+}
+// Move to next block of references. Internal, not to be called directly.
+void VP8LRefsCursorNextBlock(VP8LRefsCursor* const c);
+// Move to next position, or NULL. Should not be called if !VP8LRefsCursorOk().
+static WEBP_INLINE void VP8LRefsCursorNext(VP8LRefsCursor* const c) {
+  assert(c != NULL);
+  assert(VP8LRefsCursorOk(c));
+  if (++c->cur_pos == c->last_pos_) VP8LRefsCursorNextBlock(c);
+}
 
 // -----------------------------------------------------------------------------
 // Main entry points
 
 // Evaluates best possible backward references for specified quality.
 // Further optimize for 2D locality if use_2d_locality flag is set.
-int VP8LGetBackwardReferences(int width, int height,
-                              const uint32_t* const argb,
-                              int quality, int cache_bits, int use_2d_locality,
-                              VP8LBackwardRefs* const best);
+// The return value is the pointer to the best of the two backward refs viz,
+// refs[0] or refs[1].
+VP8LBackwardRefs* VP8LGetBackwardReferences(
+    int width, int height, const uint32_t* const argb, int quality,
+    int cache_bits, int use_2d_locality, VP8LHashChain* const hash_chain,
+    VP8LBackwardRefs refs[2]);
 
 // Produce an estimate for a good color cache size for the image.
 int VP8LCalculateEstimateForCacheSize(const uint32_t* const argb,
-                                      int xsize, int ysize,
+                                      int xsize, int ysize, int quality,
+                                      VP8LHashChain* const hash_chain,
+                                      VP8LBackwardRefs* const ref,
                                       int* const best_cache_bits);
 
 #ifdef __cplusplus

@@ -23,11 +23,7 @@ int webpWriter(const uint8_t* data, size_t data_size, const WebPPicture* const p
 int WebPImportGray(const uint8_t* gray_data, WebPPicture* pic) {
 	int y, width, uv_width;
 	if (pic == NULL || gray_data == NULL) return 0;
-#if defined(WEBP_EXPERIMENTAL_FEATURES)
-	pic->colorspace = WEBP_YUV400;
-#else
 	pic->colorspace = WEBP_YUV420;
-#endif
 	if (!WebPPictureAlloc(pic)) {
 		return 0;
 	}
@@ -36,13 +32,10 @@ int WebPImportGray(const uint8_t* gray_data, WebPPicture* pic) {
 	for(y = 0; y < pic->height; ++y) {
 		memcpy(pic->y + y * pic->y_stride, gray_data, width);
 		gray_data += width;
-#if !defined(WEBP_EXPERIMENTAL_FEATURES)
-		// WEBP_YUV420
 		if((y & 1) == 0) {
 			memset(pic->u + (y >> 1) * pic->uv_stride, 128, uv_width);
 			memset(pic->v + (y >> 1) * pic->uv_stride, 128, uv_width);
 		}
-#endif
 	}
 	return 1;
 }

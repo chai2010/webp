@@ -17,7 +17,7 @@
 #include <string.h>
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include "webp/config.h"
 #endif
 
 #ifdef WEBP_HAVE_GIF
@@ -27,6 +27,16 @@
 #include "webp/mux.h"
 #include "./example_util.h"
 #include "./gif2webp_util.h"
+
+// GIFLIB_MAJOR is only defined in libgif >= 4.2.0.
+#if defined(GIFLIB_MAJOR) && defined(GIFLIB_MINOR)
+# define LOCAL_GIF_VERSION ((GIFLIB_MAJOR << 8) | GIFLIB_MINOR)
+# define LOCAL_GIF_PREREQ(maj, min) \
+    (LOCAL_GIF_VERSION >= (((maj) << 8) | (min)))
+#else
+# define LOCAL_GIF_VERSION 0
+# define LOCAL_GIF_PREREQ(maj, min) 0
+#endif
 
 #define GIF_TRANSPARENT_MASK 0x01
 #define GIF_DISPOSE_MASK     0x07
@@ -103,12 +113,12 @@ static void Remap(const uint8_t* const src, const GifFileType* const gif,
 static int ReadFrame(GifFileType* const gif, WebPFrameRect* const gif_rect,
                      WebPPicture* const webp_frame) {
   WebPPicture sub_image;
-  const GifImageDesc image_desc = gif->Image;
+  const GifImageDesc* const image_desc = &gif->Image;
   uint32_t* dst = NULL;
   uint8_t* tmp = NULL;
   int ok = 0;
   WebPFrameRect rect = {
-      image_desc.Left, image_desc.Top, image_desc.Width, image_desc.Height
+      image_desc->Left, image_desc->Top, image_desc->Width, image_desc->Height
   };
   *gif_rect = rect;
 
@@ -124,7 +134,7 @@ static int ReadFrame(GifFileType* const gif, WebPFrameRect* const gif_rect,
   tmp = (uint8_t*)malloc(rect.width * sizeof(*tmp));
   if (tmp == NULL) goto End;
 
-  if (image_desc.Interlace) {  // Interlaced image.
+  if (image_desc->Interlace) {  // Interlaced image.
     // We need 4 passes, with the following offsets and jumps.
     const int interlace_offsets[] = { 0, 4, 2, 1 };
     const int interlace_jumps[]   = { 8, 8, 4, 2 };
@@ -172,11 +182,9 @@ static int GetBackgroundColor(const ColorMapObject* const color_map,
 }
 
 static void DisplayGifError(const GifFileType* const gif, int gif_error) {
-  // GIFLIB_MAJOR is only defined in libgif >= 4.2.0.
   // libgif 4.2.0 has retired PrintGifError() and added GifErrorString().
-#if defined(GIFLIB_MAJOR) && defined(GIFLIB_MINOR) && \
-        ((GIFLIB_MAJOR == 4 && GIFLIB_MINOR >= 2) || GIFLIB_MAJOR > 4)
-#if GIFLIB_MAJOR >= 5
+#if LOCAL_GIF_PREREQ(4,2)
+#if LOCAL_GIF_PREREQ(5,0)
   // Static string actually, hence the const char* cast.
   const char* error_str = (const char*)GifErrorString(
       (gif == NULL) ? gif_error : gif->Error);
@@ -194,7 +202,7 @@ static void DisplayGifError(const GifFileType* const gif, int gif_error) {
 #endif
 }
 
-static const char* const kErrorMessages[] = {
+static const char* const kErrorMessages[-WEBP_MUX_NOT_ENOUGH_DATA + 1] = {
   "WEBP_MUX_NOT_FOUND", "WEBP_MUX_INVALID_ARGUMENT", "WEBP_MUX_BAD_DATA",
   "WEBP_MUX_MEMORY_ERROR", "WEBP_MUX_NOT_ENOUGH_DATA"
 };
@@ -215,26 +223,26 @@ enum {
 static void Help(void) {
   printf("Usage:\n");
   printf(" gif2webp [options] gif_file -o webp_file\n");
-  printf("options:\n");
+  printf("Options:\n");
   printf("  -h / -help  ............ this help\n");
-  printf("  -lossy ................. Encode image using lossy compression.\n");
-  printf("  -mixed ................. For each frame in the image, pick lossy\n"
-         "                           or lossless compression heuristically.\n");
+  printf("  -lossy ................. encode image using lossy compression\n");
+  printf("  -mixed ................. for each frame in the image, pick lossy\n"
+         "                           or lossless compression heuristically\n");
   printf("  -q <float> ............. quality factor (0:small..100:big)\n");
   printf("  -m <int> ............... compression method (0=fast, 6=slowest)\n");
-  printf("  -kmin <int> ............ Min distance between key frames\n");
-  printf("  -kmax <int> ............ Max distance between key frames\n");
+  printf("  -kmin <int> ............ min distance between key frames\n");
+  printf("  -kmax <int> ............ max distance between key frames\n");
   printf("  -f <int> ............... filter strength (0=off..100)\n");
   printf("  -metadata <string> ..... comma separated list of metadata to\n");
   printf("                           ");
-  printf("copy from the input to the output if present.\n");
+  printf("copy from the input to the output if present\n");
   printf("                           "
          "Valid values: all, none, icc, xmp (default)\n");
   printf("  -mt .................... use multi-threading if available\n");
   printf("\n");
-  printf("  -version ............... print version number and exit.\n");
-  printf("  -v ..................... verbose.\n");
-  printf("  -quiet ................. don't print anything.\n");
+  printf("  -version ............... print version number and exit\n");
+  printf("  -v ..................... verbose\n");
+  printf("  -quiet ................. don't print anything\n");
   printf("\n");
 }
 
@@ -396,23 +404,12 @@ int main(int argc, const char *argv[]) {
   }
 
   // Start the decoder object
-#if defined(GIFLIB_MAJOR) && (GIFLIB_MAJOR >= 5)
-  // There was an API change in version 5.0.0.
+#if LOCAL_GIF_PREREQ(5,0)
   gif = DGifOpenFileName(in_file, &gif_error);
 #else
   gif = DGifOpenFileName(in_file);
 #endif
   if (gif == NULL) goto End;
-
-  // Allocate current buffer
-  frame.width = gif->SWidth;
-  frame.height = gif->SHeight;
-  frame.use_argb = 1;
-  if (!WebPPictureAlloc(&frame)) goto End;
-
-  // Initialize cache
-  cache = WebPFrameCacheNew(frame.width, frame.height, kmin, kmax, allow_mixed);
-  if (cache == NULL) goto End;
 
   mux = WebPMuxNew();
   if (mux == NULL) {
@@ -429,8 +426,56 @@ int main(int argc, const char *argv[]) {
     switch (type) {
       case IMAGE_DESC_RECORD_TYPE: {
         WebPFrameRect gif_rect;
+        GifImageDesc* const image_desc = &gif->Image;
 
         if (!DGifGetImageDesc(gif)) goto End;
+
+        // Fix some broken GIF global headers that report
+        // 0 x 0 screen dimension.
+        if (is_first_frame) {
+          if (verbose) {
+            printf("Canvas screen: %d x %d\n", gif->SWidth, gif->SHeight);
+          }
+          if (gif->SWidth == 0 || gif->SHeight == 0) {
+            image_desc->Left = 0;
+            image_desc->Top = 0;
+            gif->SWidth = image_desc->Width;
+            gif->SHeight = image_desc->Height;
+            if (gif->SWidth <= 0 || gif->SHeight <= 0) {
+              goto End;
+            }
+            if (verbose) {
+              printf("Fixed canvas screen dimension to: %d x %d\n",
+                     gif->SWidth, gif->SHeight);
+            }
+          }
+#if WEBP_MUX_ABI_VERSION > 0x0101
+          // Set definitive canvas size.
+          err = WebPMuxSetCanvasSize(mux, gif->SWidth, gif->SHeight);
+          if (err != WEBP_MUX_OK) {
+            fprintf(stderr, "Invalid canvas size %d x %d\n",
+                    gif->SWidth, gif->SHeight);
+            goto End;
+          }
+#endif
+          // Allocate current buffer.
+          frame.width = gif->SWidth;
+          frame.height = gif->SHeight;
+          frame.use_argb = 1;
+          if (!WebPPictureAlloc(&frame)) goto End;
+          WebPUtilClearPic(&frame, NULL);
+
+          // Initialize cache.
+          cache = WebPFrameCacheNew(frame.width, frame.height,
+                                    kmin, kmax, allow_mixed);
+          if (cache == NULL) goto End;
+        }
+        // Some even more broken GIF can have sub-rect with zero width/height.
+        if (image_desc->Width == 0 || image_desc->Height == 0) {
+          image_desc->Width = gif->SWidth;
+          image_desc->Height = gif->SHeight;
+        }
+
         if (!ReadFrame(gif, &gif_rect, &frame)) {
           goto End;
         }
@@ -486,7 +531,6 @@ int main(int argc, const char *argv[]) {
                 fprintf(stderr, "GIF decode warning: invalid background color "
                                 "index. Assuming white background.\n");
               }
-              WebPUtilClearPic(&frame, NULL);
             }
             break;
           }
@@ -495,13 +539,16 @@ int main(int argc, const char *argv[]) {
           }
           case APPLICATION_EXT_FUNC_CODE: {
             if (data[0] != 11) break;    // Chunk is too short
-            if (!memcmp(data + 1, "NETSCAPE2.0", 11)) {
+            if (!memcmp(data + 1, "NETSCAPE2.0", 11) ||
+                !memcmp(data + 1, "ANIMEXTS1.0", 11)) {
               // Recognize and parse Netscape2.0 NAB extension for loop count.
               if (DGifGetExtensionNext(gif, &data) == GIF_ERROR) goto End;
               if (data == NULL) goto End;  // Loop count sub-block missing.
-              if (data[0] != 3 && data[1] != 1) break;   // wrong size/marker
+              if (data[0] < 3 || data[1] != 1) break;   // wrong size/marker
               anim.loop_count = data[2] | (data[3] << 8);
-              if (verbose) printf("Loop count: %d\n", anim.loop_count);
+              if (verbose) {
+                fprintf(stderr, "Loop count: %d\n", anim.loop_count);
+              }
             } else {  // An extension containing metadata.
               // We only store the first encountered chunk of each type, and
               // only if requested by the user.
@@ -555,7 +602,8 @@ int main(int argc, const char *argv[]) {
                 // Add metadata chunk.
                 err = WebPMuxSetChunk(mux, fourccs[is_icc], &metadata, 1);
                 if (verbose) {
-                  printf("%s size: %d\n", features[is_icc], (int)metadata.size);
+                  fprintf(stderr, "%s size: %d\n",
+                          features[is_icc], (int)metadata.size);
                 }
                 WebPDataClear(&metadata);
                 if (err != WEBP_MUX_OK) {
@@ -621,11 +669,11 @@ int main(int argc, const char *argv[]) {
       goto End;
     }
     if (!quiet) {
-      printf("Saved output file: %s\n", out_file);
+      fprintf(stderr, "Saved output file: %s\n", out_file);
     }
   } else {
     if (!quiet) {
-      printf("Nothing written; use -o flag to save the result.\n");
+      fprintf(stderr, "Nothing written; use -o flag to save the result.\n");
     }
   }
 
@@ -644,7 +692,11 @@ int main(int argc, const char *argv[]) {
     DisplayGifError(gif, gif_error);
   }
   if (gif != NULL) {
+#if LOCAL_GIF_PREREQ(5,1)
+    DGifCloseFile(gif, &gif_error);
+#else
     DGifCloseFile(gif);
+#endif
   }
 
   return !ok;

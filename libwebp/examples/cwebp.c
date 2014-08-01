@@ -17,7 +17,7 @@
 #include <string.h>
 
 #ifdef HAVE_CONFIG_H
-#include "config.h"
+#include "webp/config.h"
 #endif
 
 #include "webp/encode.h"
@@ -28,6 +28,7 @@
 #include "./jpegdec.h"
 #include "./pngdec.h"
 #include "./tiffdec.h"
+#include "./webpdec.h"
 #include "./wicdec.h"
 
 #ifndef WEBP_DLL
@@ -93,6 +94,9 @@ static int ReadPicture(const char* const filename, WebPPicture* const pic,
   } else {
     // If no size specified, try to decode it using WIC.
     ok = ReadPictureWithWIC(filename, pic, keep_alpha, metadata);
+    if (!ok) {
+      ok = ReadWebP(filename, pic, keep_alpha, metadata);
+    }
   }
   if (!ok) {
     fprintf(stderr, "Error! Could not process file %s\n", filename);
@@ -106,26 +110,30 @@ typedef enum {
   PNG_ = 0,
   JPEG_,
   TIFF_,  // 'TIFF' clashes with libtiff
+  WEBP_,
   UNSUPPORTED
 } InputFileFormat;
 
 static InputFileFormat GetImageType(FILE* in_file) {
   InputFileFormat format = UNSUPPORTED;
-  uint32_t magic;
-  uint8_t buf[4];
+  uint32_t magic1, magic2;
+  uint8_t buf[12];
 
-  if ((fread(&buf[0], 4, 1, in_file) != 1) ||
+  if ((fread(&buf[0], 12, 1, in_file) != 1) ||
       (fseek(in_file, 0, SEEK_SET) != 0)) {
     return format;
   }
 
-  magic = ((uint32_t)buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | buf[3];
-  if (magic == 0x89504E47U) {
+  magic1 = ((uint32_t)buf[0] << 24) | (buf[1] << 16) | (buf[2] << 8) | buf[3];
+  magic2 = ((uint32_t)buf[8] << 24) | (buf[9] << 16) | (buf[10] << 8) | buf[11];
+  if (magic1 == 0x89504E47U) {
     format = PNG_;
-  } else if (magic >= 0xFFD8FF00U && magic <= 0xFFD8FFFFU) {
+  } else if (magic1 >= 0xFFD8FF00U && magic1 <= 0xFFD8FFFFU) {
     format = JPEG_;
-  } else if (magic == 0x49492A00 || magic == 0x4D4D002A) {
+  } else if (magic1 == 0x49492A00 || magic1 == 0x4D4D002A) {
     format = TIFF_;
+  } else if (magic1 == 0x52494646 && magic2 == 0x57454250) {
+    format = WEBP_;
   }
   return format;
 }
@@ -148,6 +156,8 @@ static int ReadPicture(const char* const filename, WebPPicture* const pic,
       ok = ReadJPEG(in_file, pic, metadata);
     } else if (format == TIFF_) {
       ok = ReadTIFF(filename, pic, keep_alpha, metadata);
+    } else if (format == WEBP_) {
+      ok = ReadWebP(filename, pic, keep_alpha, metadata);
     }
   } else {
     // If image size is specified, infer it as YUV format.
@@ -266,10 +276,6 @@ static void PrintExtraInfoLossy(const WebPPicture* const pic, int short_output,
         fprintf(stderr, "             transparency:   %6d (%.1f dB)\n",
                 stats->alpha_data_size, stats->PSNR[4]);
       }
-      if (stats->layer_data_size) {
-        fprintf(stderr, "             enhancement:    %6d\n",
-                stats->layer_data_size);
-      }
       fprintf(stderr, " Residuals bytes  "
                       "|segment 1|segment 2|segment 3"
                       "|segment 4|  total\n");
@@ -298,6 +304,9 @@ static void PrintExtraInfoLossy(const WebPPicture* const pic, int short_output,
       PrintFullLosslessInfo(stats, "alpha");
     }
   }
+}
+
+static void PrintMapInfo(const WebPPicture* const pic) {
   if (pic->extra_info != NULL) {
     const int mb_w = (pic->width + 15) / 16;
     const int mb_h = (pic->height + 15) / 16;
@@ -307,18 +316,18 @@ static void PrintExtraInfoLossy(const WebPPicture* const pic, int short_output,
       for (x = 0; x < mb_w; ++x) {
         const int c = pic->extra_info[x + y * mb_w];
         if (type == 1) {   // intra4/intra16
-          printf("%c", "+."[c]);
+          fprintf(stderr, "%c", "+."[c]);
         } else if (type == 2) {    // segments
-          printf("%c", ".-*X"[c]);
+          fprintf(stderr, "%c", ".-*X"[c]);
         } else if (type == 3) {    // quantizers
-          printf("%.2d ", c);
+          fprintf(stderr, "%.2d ", c);
         } else if (type == 6 || type == 7) {
-          printf("%3d ", c);
+          fprintf(stderr, "%3d ", c);
         } else {
-          printf("0x%.2x ", c);
+          fprintf(stderr, "0x%.2x ", c);
         }
       }
-      printf("\n");
+      fprintf(stderr, "\n");
     }
   }
 }
@@ -531,9 +540,8 @@ static int WriteWebPWithMetadata(FILE* const out,
 //------------------------------------------------------------------------------
 
 static int ProgressReport(int percent, const WebPPicture* const picture) {
-  printf("[%s]: %3d %%      \r",
-         (char*)picture->user_data, percent);
-  fflush(stdout);
+  fprintf(stderr, "[%s]: %3d %%      \r",
+          (char*)picture->user_data, percent);
   return 1;  // all ok
 }
 
@@ -550,35 +558,39 @@ static void HelpShort(void) {
 static void HelpLong(void) {
   printf("Usage:\n");
   printf(" cwebp [-preset <...>] [options] in_file [-o out_file]\n\n");
-  printf("If input size (-s) for an image is not specified, "
-         "it is assumed to be a PNG, JPEG or TIFF file.\n");
+  printf("If input size (-s) for an image is not specified, it is\n"
+         "assumed to be a PNG, JPEG, TIFF or WebP file.\n");
 #ifdef HAVE_WINCODEC_H
-  printf("Windows builds can take as input any of the files handled by WIC\n");
+  printf("Windows builds can take as input any of the files handled by WIC.\n");
 #endif
-  printf("options:\n");
+  printf("\nOptions:\n");
   printf("  -h / -help  ............ short help\n");
   printf("  -H / -longhelp  ........ long help\n");
   printf("  -q <float> ............. quality factor (0:small..100:big)\n");
-  printf("  -alpha_q <int> ......... Transparency-compression quality "
-         "(0..100).\n");
-  printf("  -preset <string> ....... Preset setting, one of:\n");
+  printf("  -alpha_q <int> ......... transparency-compression quality "
+         "(0..100)\n");
+  printf("  -preset <string> ....... preset setting, one of:\n");
   printf("                            default, photo, picture,\n");
   printf("                            drawing, icon, text\n");
-  printf("     -preset must come first, as it overwrites other parameters.");
+  printf("     -preset must come first, as it overwrites other parameters\n");
+#if WEBP_ENCODER_ABI_VERSION > 0x0202
+  printf("  -z <int> ............... activates lossless preset with given\n"
+         "                           level in [0:fast, ..., 9:slowest]\n");
+#endif
   printf("\n");
   printf("  -m <int> ............... compression method (0=fast, 6=slowest)\n");
   printf("  -segments <int> ........ number of segments to use (1..4)\n");
-  printf("  -size <int> ............ Target size (in bytes)\n");
-  printf("  -psnr <float> .......... Target PSNR (in dB. typically: 42)\n");
+  printf("  -size <int> ............ target size (in bytes)\n");
+  printf("  -psnr <float> .......... target PSNR (in dB. typically: 42)\n");
   printf("\n");
-  printf("  -s <int> <int> ......... Input size (width x height) for YUV\n");
-  printf("  -sns <int> ............. Spatial Noise Shaping (0:off, 100:max)\n");
+  printf("  -s <int> <int> ......... input size (width x height) for YUV\n");
+  printf("  -sns <int> ............. spatial noise shaping (0:off, 100:max)\n");
   printf("  -f <int> ............... filter strength (0=off..100)\n");
   printf("  -sharpness <int> ....... "
          "filter sharpness (0:most .. 7:least sharp)\n");
   printf("  -strong ................ use strong filter instead "
-                                     "of simple (default).\n");
-  printf("  -nostrong .............. use simple filter instead of strong.\n");
+                                     "of simple (default)\n");
+  printf("  -nostrong .............. use simple filter instead of strong\n");
   printf("  -partition_limit <int> . limit quality to fit the 512k limit on\n");
   printf("                           "
          "the first partition (0=no degradation ... 100=full)\n");
@@ -587,26 +599,23 @@ static void HelpLong(void) {
   printf("  -resize <w> <h> ........ resize picture (after any cropping)\n");
   printf("  -mt .................... use multi-threading if available\n");
   printf("  -low_memory ............ reduce memory usage (slower encoding)\n");
-#ifdef WEBP_EXPERIMENTAL_FEATURES
-  printf("  -444 / -422 / -gray ..... Change colorspace\n");
-#endif
-  printf("  -map <int> ............. print map of extra info.\n");
-  printf("  -print_psnr ............ prints averaged PSNR distortion.\n");
-  printf("  -print_ssim ............ prints averaged SSIM distortion.\n");
-  printf("  -print_lsim ............ prints local-similarity distortion.\n");
-  printf("  -d <file.pgm> .......... dump the compressed output (PGM file).\n");
-  printf("  -alpha_method <int> .... Transparency-compression method (0..1)\n");
-  printf("  -alpha_filter <string> . predictive filtering for alpha plane.\n");
-  printf("                           One of: none, fast (default) or best.\n");
-  printf("  -alpha_cleanup ......... Clean RGB values in transparent area.\n");
-  printf("  -blend_alpha <hex> ..... Blend colors against background color\n"
+  printf("  -map <int> ............. print map of extra info\n");
+  printf("  -print_psnr ............ prints averaged PSNR distortion\n");
+  printf("  -print_ssim ............ prints averaged SSIM distortion\n");
+  printf("  -print_lsim ............ prints local-similarity distortion\n");
+  printf("  -d <file.pgm> .......... dump the compressed output (PGM file)\n");
+  printf("  -alpha_method <int> .... transparency-compression method (0..1)\n");
+  printf("  -alpha_filter <string> . predictive filtering for alpha plane,\n");
+  printf("                           one of: none, fast (default) or best\n");
+  printf("  -alpha_cleanup ......... clean RGB values in transparent area\n");
+  printf("  -blend_alpha <hex> ..... blend colors against background color\n"
          "                           expressed as RGB values written in\n"
          "                           hexadecimal, e.g. 0xc0e0d0 for red=0xc0\n"
-         "                           green=0xe0 and blue=0xd0.\n");
-  printf("  -noalpha ............... discard any transparency information.\n");
-  printf("  -lossless .............. Encode image losslessly.\n");
-  printf("  -hint <string> ......... Specify image characteristics hint.\n");
-  printf("                           One of: photo, picture or graph\n");
+         "                           green=0xe0 and blue=0xd0\n");
+  printf("  -noalpha ............... discard any transparency information\n");
+  printf("  -lossless .............. encode image losslessly\n");
+  printf("  -hint <string> ......... specify image characteristics hint,\n");
+  printf("                           one of: photo, picture or graph\n");
 
   printf("\n");
   printf("  -metadata <string> ..... comma separated list of metadata to\n");
@@ -617,18 +626,18 @@ static void HelpLong(void) {
 
   printf("\n");
   printf("  -short ................. condense printed message\n");
-  printf("  -quiet ................. don't print anything.\n");
-  printf("  -version ............... print version number and exit.\n");
+  printf("  -quiet ................. don't print anything\n");
+  printf("  -version ............... print version number and exit\n");
 #ifndef WEBP_DLL
-  printf("  -noasm ................. disable all assembly optimizations.\n");
+  printf("  -noasm ................. disable all assembly optimizations\n");
 #endif
   printf("  -v ..................... verbose, e.g. print encoding/decoding "
          "times\n");
   printf("  -progress .............. report encoding progress\n");
   printf("\n");
   printf("Experimental Options:\n");
-  printf("  -jpeg_like ............. Roughly match expected JPEG size.\n");
-  printf("  -af .................... auto-adjust filter strength.\n");
+  printf("  -jpeg_like ............. roughly match expected JPEG size\n");
+  printf("  -af .................... auto-adjust filter strength\n");
   printf("  -pre <int> ............. pre-processing filter\n");
   printf("\n");
 }
@@ -636,7 +645,7 @@ static void HelpLong(void) {
 //------------------------------------------------------------------------------
 // Error messages
 
-static const char* const kErrorMessages[] = {
+static const char* const kErrorMessages[VP8_ENC_ERROR_LAST] = {
   "OK",
   "OUT_OF_MEMORY: Out of memory allocating objects",
   "BITSTREAM_OUT_OF_MEMORY: Out of memory re-allocating byte buffer",
@@ -669,6 +678,10 @@ int main(int argc, const char *argv[]) {
   uint32_t background_color = 0xffffffu;
   int crop = 0, crop_x = 0, crop_y = 0, crop_w = 0, crop_h = 0;
   int resize_w = 0, resize_h = 0;
+#if WEBP_ENCODER_ABI_VERSION > 0x0202
+  int lossless_preset = 6;
+  int use_lossless_preset = -1;  // -1=unset, 0=don't use, 1=use it
+#endif
   int show_progress = 0;
   int keep_metadata = 0;
   int metadata_written = 0;
@@ -717,14 +730,23 @@ int main(int argc, const char *argv[]) {
       config.show_compressed = 1;
       print_distortion = 2;
     } else if (!strcmp(argv[c], "-short")) {
-      short_output++;
+      ++short_output;
     } else if (!strcmp(argv[c], "-s") && c < argc - 2) {
       picture.width = strtol(argv[++c], NULL, 0);
       picture.height = strtol(argv[++c], NULL, 0);
     } else if (!strcmp(argv[c], "-m") && c < argc - 1) {
       config.method = strtol(argv[++c], NULL, 0);
+#if WEBP_ENCODER_ABI_VERSION > 0x0202
+      use_lossless_preset = 0;   // disable -z option
+#endif
     } else if (!strcmp(argv[c], "-q") && c < argc - 1) {
       config.quality = (float)strtod(argv[++c], NULL);
+#if WEBP_ENCODER_ABI_VERSION > 0x0202
+      use_lossless_preset = 0;   // disable -z option
+    } else if (!strcmp(argv[c], "-z") && c < argc - 1) {
+      lossless_preset = strtol(argv[++c], NULL, 0);
+      if (use_lossless_preset != 0) use_lossless_preset = 1;
+#endif
     } else if (!strcmp(argv[c], "-alpha_q") && c < argc - 1) {
       config.alpha_quality = strtol(argv[++c], NULL, 0);
     } else if (!strcmp(argv[c], "-alpha_method") && c < argc - 1) {
@@ -795,14 +817,6 @@ int main(int argc, const char *argv[]) {
       config.partition_limit = strtol(argv[++c], NULL, 0);
     } else if (!strcmp(argv[c], "-map") && c < argc - 1) {
       picture.extra_info_type = strtol(argv[++c], NULL, 0);
-#ifdef WEBP_EXPERIMENTAL_FEATURES
-    } else if (!strcmp(argv[c], "-444")) {
-      picture.colorspace = WEBP_YUV444;
-    } else if (!strcmp(argv[c], "-422")) {
-      picture.colorspace = WEBP_YUV422;
-    } else if (!strcmp(argv[c], "-gray")) {
-      picture.colorspace = WEBP_YUV400;
-#endif
     } else if (!strcmp(argv[c], "-crop") && c < argc - 4) {
       crop = 1;
       crop_x = strtol(argv[++c], NULL, 0);
@@ -913,6 +927,15 @@ int main(int argc, const char *argv[]) {
     goto Error;
   }
 
+#if WEBP_ENCODER_ABI_VERSION > 0x0202
+  if (use_lossless_preset == 1) {
+    if (!WebPConfigLosslessPreset(&config, lossless_preset)) {
+      fprintf(stderr, "Invalid lossless preset (-z %d)\n", lossless_preset);
+      goto Error;
+    }
+  }
+#endif
+
   // Check for unsupported command line options for lossless mode and log
   // warning for such options.
   if (!quiet && config.lossless == 1) {
@@ -956,8 +979,9 @@ int main(int argc, const char *argv[]) {
   }
 
   // Open the output
-  if (out_file) {
-    out = fopen(out_file, "wb");
+  if (out_file != NULL) {
+    const int use_stdout = !strcmp(out_file, "-");
+    out = use_stdout ? stdout : fopen(out_file, "wb");
     if (out == NULL) {
       fprintf(stderr, "Error! Cannot open output file '%s'\n", out_file);
       goto Error;
@@ -1058,47 +1082,60 @@ int main(int argc, const char *argv[]) {
   }
 
   if (!quiet) {
-    if (config.lossless) {
-      PrintExtraInfoLossless(&picture, short_output, in_file);
-    } else {
-      PrintExtraInfoLossy(&picture, short_output, config.low_memory, in_file);
+    if (!short_output || print_distortion < 0) {
+      if (config.lossless) {
+        PrintExtraInfoLossless(&picture, short_output, in_file);
+      } else {
+        PrintExtraInfoLossy(&picture, short_output, config.low_memory, in_file);
+      }
+    }
+    if (!short_output && picture.extra_info_type > 0) {
+      PrintMapInfo(&picture);
+    }
+    if (print_distortion >= 0) {    // print distortion
+      static const char* distortion_names[] = { "PSNR", "SSIM", "LSIM" };
+      float values[5];
+      // Comparison is performed in YUVA colorspace.
+      if (original_picture.use_argb &&
+          !WebPPictureARGBToYUVA(&original_picture, WEBP_YUV420A)) {
+       fprintf(stderr, "Error while converting original picture to YUVA.\n");
+        goto Error;
+      }
+      if (picture.use_argb &&
+          !WebPPictureARGBToYUVA(&picture, WEBP_YUV420A)) {
+        fprintf(stderr, "Error while converting compressed picture to YUVA.\n");
+        goto Error;
+      }
+      if (!WebPPictureDistortion(&picture, &original_picture,
+                                 print_distortion, values)) {
+        fprintf(stderr, "Error while computing the distortion.\n");
+        goto Error;
+      }
+      if (!short_output) {
+        fprintf(stderr, "%s: Y:%.2f U:%.2f V:%.2f A:%.2f  Total:%.2f\n",
+                distortion_names[print_distortion],
+                values[0], values[1], values[2], values[3], values[4]);
+      } else {
+        fprintf(stderr, "%7d %.4f\n", picture.stats->coded_size, values[4]);
+      }
     }
     if (!short_output) {
       PrintMetadataInfo(&metadata, metadata_written);
     }
   }
-  if (!quiet && !short_output && print_distortion >= 0) {  // print distortion
-    static const char* distortion_names[] = { "PSNR", "SSIM", "LSIM" };
-    float values[5];
-    // Comparison is performed in YUVA colorspace.
-    if (original_picture.use_argb &&
-        !WebPPictureARGBToYUVA(&original_picture, WEBP_YUV420A)) {
-      fprintf(stderr, "Error while converting original picture to YUVA.\n");
-      goto Error;
-    }
-    if (picture.use_argb &&
-        !WebPPictureARGBToYUVA(&picture, WEBP_YUV420A)) {
-      fprintf(stderr, "Error while converting compressed picture to YUVA.\n");
-      goto Error;
-    }
-    if (!WebPPictureDistortion(&picture, &original_picture,
-                               print_distortion, values)) {
-      fprintf(stderr, "Error while computing the distortion.\n");
-      goto Error;
-    }
-    fprintf(stderr, "%s: Y:%.2f U:%.2f V:%.2f A:%.2f  Total:%.2f\n",
-            distortion_names[print_distortion],
-            values[0], values[1], values[2], values[3], values[4]);
-  }
   return_value = 0;
 
  Error:
+#if WEBP_ENCODER_ABI_VERSION > 0x0202
+  WebPMemoryWriterClear(&memory_writer);
+#else
   free(memory_writer.mem);
+#endif
   free(picture.extra_info);
   MetadataFree(&metadata);
   WebPPictureFree(&picture);
   WebPPictureFree(&original_picture);
-  if (out != NULL) {
+  if (out != NULL && out != stdout) {
     fclose(out);
   }
 

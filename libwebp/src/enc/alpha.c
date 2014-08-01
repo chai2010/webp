@@ -17,6 +17,7 @@
 #include "./vp8enci.h"
 #include "../utils/filters.h"
 #include "../utils/quant_levels.h"
+#include "../utils/utils.h"
 #include "../webp/format_constants.h"
 
 // -----------------------------------------------------------------------------
@@ -34,7 +35,7 @@
 //
 // 'output' corresponds to the buffer containing compressed alpha data.
 //          This buffer is allocated by this method and caller should call
-//          free(*output) when done.
+//          WebPSafeFree(*output) when done.
 // 'output_size' corresponds to size of this compressed alpha buffer.
 //
 // Returns 1 on successfully encoding the alpha and
@@ -231,7 +232,7 @@ static int ApplyFiltersAndEncode(const uint8_t* alpha, int width, int height,
       GetFilterMap(alpha, width, height, filter, effort_level);
   InitFilterTrial(&best);
   if (try_map != FILTER_TRY_NONE) {
-    uint8_t* filtered_alpha =  (uint8_t*)malloc(data_size);
+    uint8_t* filtered_alpha =  (uint8_t*)WebPSafeMalloc(1ULL, data_size);
     if (filtered_alpha == NULL) return 0;
 
     for (filter = WEBP_FILTER_NONE; ok && try_map; ++filter, try_map >>= 1) {
@@ -248,7 +249,7 @@ static int ApplyFiltersAndEncode(const uint8_t* alpha, int width, int height,
         }
       }
     }
-    free(filtered_alpha);
+    WebPSafeFree(filtered_alpha);
   } else {
     ok = EncodeAlphaInternal(alpha, width, height, method, WEBP_FILTER_NONE,
                              reduce_levels, effort_level, NULL, &best);
@@ -298,7 +299,7 @@ static int EncodeAlpha(VP8Encoder* const enc,
     filter = WEBP_FILTER_NONE;
   }
 
-  quant_alpha = (uint8_t*)malloc(data_size);
+  quant_alpha = (uint8_t*)WebPSafeMalloc(1ULL, data_size);
   if (quant_alpha == NULL) {
     return 0;
   }
@@ -325,7 +326,7 @@ static int EncodeAlpha(VP8Encoder* const enc,
     }
   }
 
-  free(quant_alpha);
+  WebPSafeFree(quant_alpha);
   return ok;
 }
 
@@ -346,7 +347,7 @@ static int CompressAlphaJob(VP8Encoder* const enc, void* dummy) {
     return 0;
   }
   if (alpha_size != (uint32_t)alpha_size) {  // Sanity check.
-    free(alpha_data);
+    WebPSafeFree(alpha_data);
     return 0;
   }
   enc->alpha_data_size_ = (uint32_t)alpha_size;
@@ -361,7 +362,7 @@ void VP8EncInitAlpha(VP8Encoder* const enc) {
   enc->alpha_data_size_ = 0;
   if (enc->thread_level_ > 0) {
     WebPWorker* const worker = &enc->alpha_worker_;
-    WebPWorkerInit(worker);
+    WebPGetWorkerInterface()->Init(worker);
     worker->data1 = enc;
     worker->data2 = NULL;
     worker->hook = (WebPWorkerHook)CompressAlphaJob;
@@ -372,10 +373,11 @@ int VP8EncStartAlpha(VP8Encoder* const enc) {
   if (enc->has_alpha_) {
     if (enc->thread_level_ > 0) {
       WebPWorker* const worker = &enc->alpha_worker_;
-      if (!WebPWorkerReset(worker)) {    // Makes sure worker is good to go.
+      // Makes sure worker is good to go.
+      if (!WebPGetWorkerInterface()->Reset(worker)) {
         return 0;
       }
-      WebPWorkerLaunch(worker);
+      WebPGetWorkerInterface()->Launch(worker);
       return 1;
     } else {
       return CompressAlphaJob(enc, NULL);   // just do the job right away
@@ -388,7 +390,7 @@ int VP8EncFinishAlpha(VP8Encoder* const enc) {
   if (enc->has_alpha_) {
     if (enc->thread_level_ > 0) {
       WebPWorker* const worker = &enc->alpha_worker_;
-      if (!WebPWorkerSync(worker)) return 0;  // error
+      if (!WebPGetWorkerInterface()->Sync(worker)) return 0;  // error
     }
   }
   return WebPReportProgress(enc->pic_, enc->percent_ + 20, &enc->percent_);
@@ -398,10 +400,12 @@ int VP8EncDeleteAlpha(VP8Encoder* const enc) {
   int ok = 1;
   if (enc->thread_level_ > 0) {
     WebPWorker* const worker = &enc->alpha_worker_;
-    ok = WebPWorkerSync(worker);  // finish anything left in flight
-    WebPWorkerEnd(worker);  // still need to end the worker, even if !ok
+    // finish anything left in flight
+    ok = WebPGetWorkerInterface()->Sync(worker);
+    // still need to end the worker, even if !ok
+    WebPGetWorkerInterface()->End(worker);
   }
-  free(enc->alpha_data_);
+  WebPSafeFree(enc->alpha_data_);
   enc->alpha_data_ = NULL;
   enc->alpha_data_size_ = 0;
   enc->has_alpha_ = 0;

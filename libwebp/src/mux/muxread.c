@@ -57,7 +57,7 @@ static WebPMuxError ChunkVerifyAndAssign(WebPChunk* chunk,
   WebPData chunk_data;
 
   // Sanity checks.
-  if (data_size < TAG_SIZE) return WEBP_MUX_NOT_ENOUGH_DATA;
+  if (data_size < CHUNK_HEADER_SIZE) return WEBP_MUX_NOT_ENOUGH_DATA;
   chunk_size = GetLE32(data + TAG_SIZE);
 
   {
@@ -220,7 +220,7 @@ WebPMux* WebPMuxCreateInternal(const WebPData* bitstream, int copy_data,
   data += RIFF_HEADER_SIZE;
   size -= RIFF_HEADER_SIZE;
 
-  wpi = (WebPMuxImage*)malloc(sizeof(*wpi));
+  wpi = (WebPMuxImage*)WebPSafeMalloc(1ULL, sizeof(*wpi));
   if (wpi == NULL) goto Err;
   MuxImageInit(wpi);
 
@@ -264,6 +264,10 @@ WebPMux* WebPMuxCreateInternal(const WebPData* bitstream, int copy_data,
                                          // getting all chunks of an image.
         chunk_list = MuxGetChunkListFromId(mux, id);  // List to add this chunk.
         if (ChunkSetNth(&chunk, chunk_list, 0) != WEBP_MUX_OK) goto Err;
+        if (id == WEBP_CHUNK_VP8X) {  // grab global specs
+          mux->canvas_width_ = GetLE24(data + 12) + 1;
+          mux->canvas_height_ = GetLE24(data + 15) + 1;
+        }
         break;
     }
     data += data_size;
@@ -320,14 +324,20 @@ static WebPMuxError MuxGetCanvasInfo(const WebPMux* const mux,
     f = GetLE32(data.bytes + 0);
     w = GetLE24(data.bytes + 4) + 1;
     h = GetLE24(data.bytes + 7) + 1;
-  } else {  // Single image case.
+  } else {
     const WebPMuxImage* const wpi = mux->images_;
-    WebPMuxError err = ValidateForSingleImage(mux);
-    if (err != WEBP_MUX_OK) return err;
-    assert(wpi != NULL);
-    w = wpi->width_;
-    h = wpi->height_;
-    if (wpi->has_alpha_) f |= ALPHA_FLAG;
+    // Grab user-forced canvas size as default.
+    w = mux->canvas_width_;
+    h = mux->canvas_height_;
+    if (w == 0 && h == 0 && ValidateForSingleImage(mux) == WEBP_MUX_OK) {
+      // single image and not forced canvas size => use dimension of first frame
+      assert(wpi != NULL);
+      w = wpi->width_;
+      h = wpi->height_;
+    }
+    if (wpi != NULL) {
+      if (wpi->has_alpha_) f |= ALPHA_FLAG;
+    }
   }
   if (w * (uint64_t)h >= MAX_IMAGE_AREA) return WEBP_MUX_BAD_DATA;
 
@@ -375,7 +385,7 @@ static WebPMuxError SynthesizeBitstream(const WebPMuxImage* const wpi,
   // Note: No need to output ANMF/FRGM chunk for a single image.
   const size_t size = RIFF_HEADER_SIZE + vp8x_size + alpha_size +
                       ChunkDiskSize(wpi->img_);
-  uint8_t* const data = (uint8_t*)malloc(size);
+  uint8_t* const data = (uint8_t*)WebPSafeMalloc(1ULL, size);
   if (data == NULL) return WEBP_MUX_MEMORY_ERROR;
 
   // Main RIFF header.
@@ -537,4 +547,3 @@ WebPMuxError WebPMuxNumChunks(const WebPMux* mux,
 }
 
 //------------------------------------------------------------------------------
-

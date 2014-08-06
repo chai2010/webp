@@ -14,7 +14,7 @@ import (
 const testdataDir = "./testdata/"
 
 func loadImage(filename string) (m image.Image, err error) {
-	f, err := os.Open(filename)
+	f, err := os.Open(testdataDir + filename)
 	if err != nil {
 		return
 	}
@@ -24,12 +24,12 @@ func loadImage(filename string) (m image.Image, err error) {
 }
 
 func TestDecode(t *testing.T) {
-	img0, err := loadImage(testdataDir + "video-001.png")
+	img0, err := loadImage("video-001.png")
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	img1, err := loadImage(testdataDir + "video-001.webp")
+	img1, err := loadImage("video-001.webp")
 	if err != nil {
 		t.Fatal(err)
 	}

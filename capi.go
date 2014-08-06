@@ -146,10 +146,10 @@ var cgoIsUnsafePtr = func() bool {
 		return false
 	}
 	if strings.HasPrefix(runtime.Version(), "go1.2") {
-		return true // Go1.3 use contiguous stack, need move stack.
+		return false
 	}
 	if strings.HasPrefix(runtime.Version(), "go1.3") {
-		return true
+		return true // Go1.3 use contiguous stack, need move stack.
 	}
 	return true
 }()

@@ -135,6 +135,8 @@ import (
 	"unsafe"
 )
 
+const maxWebpHeaderSize = 1024
+
 // Go1.3: Changes to the garbage collector
 // http://golang.org/doc/go1.3#garbage_collector
 
@@ -178,6 +180,9 @@ func webpGetInfo(data []byte) (width, height int, has_alpha bool, err error) {
 	if len(data) == 0 {
 		err = errors.New("webpGetInfo: bad arguments")
 		return
+	}
+	if len(data) > maxWebpHeaderSize {
+		data = data[:maxWebpHeaderSize]
 	}
 	cData := cgoSafePtr(data)
 	defer cgoFreePtr(cData)

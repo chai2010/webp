@@ -14,10 +14,12 @@ import (
 // DecodeConfig returns the color model and dimensions of a WEBP image without
 // decoding the entire image.
 func DecodeConfig(r io.Reader) (config image.Config, err error) {
-	data, err := ioutil.ReadAll(r)
-	if err != nil {
+	header := make([]byte, maxWebpHeaderSize)
+	n, err := r.Read(header)
+	if err != nil && err != io.EOF {
 		return
 	}
+	header, err = header[:n], nil
 	width, height, _, err := GetInfo(data)
 	if err != nil {
 		return

@@ -19,7 +19,6 @@ Example
 
 	import (
 		"fmt"
-		"image"
 		"io/ioutil"
 		"log"
 
@@ -27,7 +26,7 @@ Example
 	)
 
 	func main() {
-		var cfg image.Config
+		var width, height int
 		var data []byte
 		var err error
 
@@ -37,10 +36,10 @@ Example
 		}
 
 		// GetInfo
-		if cfg.Width, cfg.Height, _, err = webp.GetInfo(data); err != nil {
+		if width, height, _, err = webp.GetInfo(data); err != nil {
 			log.Fatal(err)
 		}
-		fmt.Printf("width = %d, height = %d\n", cfg.Width, cfg.Height)
+		fmt.Printf("image size: width = %d, height = %d\n", width, height)
 
 		// Decode webp
 		rgba, err := webp.DecodeRGBA(data)
@@ -55,6 +54,7 @@ Example
 		if err = ioutil.WriteFile("output.webp", data, 0666); err != nil {
 			log.Fatalf("saveWebp: ioutil.WriteFile, err = %v", err)
 		}
+		fmt.Printf("Save output.webp ok\n")
 	}
 
 

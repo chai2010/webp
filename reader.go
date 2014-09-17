@@ -20,7 +20,7 @@ func DecodeConfig(r io.Reader) (config image.Config, err error) {
 		return
 	}
 	header, err = header[:n], nil
-	width, height, _, err := GetInfo(data)
+	width, height, _, err := GetInfo(header)
 	if err != nil {
 		return
 	}

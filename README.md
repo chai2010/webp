@@ -19,6 +19,7 @@ Example
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -27,6 +28,7 @@ import (
 )
 
 func main() {
+	var buf bytes.Buffer
 	var width, height int
 	var data []byte
 	var err error
@@ -43,16 +45,16 @@ func main() {
 	fmt.Printf("image size: width = %d, height = %d\n", width, height)
 
 	// Decode webp
-	rgba, err := webp.DecodeRGBA(data)
+	m, err := webp.Decode(bytes.NewReader(data))
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// Encode lossless webp
-	if data, err = webp.EncodeLosslessRGBA(rgba); err != nil {
+	if err = webp.Encode(&buf, m, &webp.Options{Lossless: true}); err != nil {
 		log.Fatalf("saveWebp: webp.EncodeLosslessRGBA, err = %v", err)
 	}
-	if err = ioutil.WriteFile("output.webp", data, 0666); err != nil {
+	if err = ioutil.WriteFile("output.webp", buf.Bytes(), 0666); err != nil {
 		log.Fatalf("saveWebp: ioutil.WriteFile, err = %v", err)
 	}
 	fmt.Printf("Save output.webp ok\n")

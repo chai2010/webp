@@ -78,7 +78,10 @@ func TestEncode(t *testing.T) {
 		}
 
 		// Compare the average delta to the tolerance level.
-		want := v.MaxDelta
+		var want int
+		if !v.Lossless {
+			want = v.MaxDelta
+		}
 		if got := averageDelta(img0, img1); got > want {
 			t.Fatalf("%d: average delta too high; got %d, want <= %d", i, got, want)
 		}

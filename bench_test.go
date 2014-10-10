@@ -9,21 +9,7 @@ import (
 	"testing"
 )
 
-func BenchmarkEncodeAndDecode_Safe(b *testing.B) {
-	old := cgoIsUnsafePtr
-	cgoIsUnsafePtr = false
-	benchmarkEncodeAndDecode(b)
-	cgoIsUnsafePtr = old
-}
-
-func BenchmarkEncodeAndDecode_Unsafe(b *testing.B) {
-	old := cgoIsUnsafePtr
-	cgoIsUnsafePtr = true
-	benchmarkEncodeAndDecode(b)
-	cgoIsUnsafePtr = old
-}
-
-func benchmarkEncodeAndDecode(b *testing.B) {
+func BenchmarkEncodeAndDecode(b *testing.B) {
 	var buf bytes.Buffer
 
 	img, err := loadImage("1_webp_ll.png")

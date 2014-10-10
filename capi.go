@@ -130,51 +130,10 @@ struct cgoWebpEncodeLosslessRGBAReturn {
 import "C"
 import (
 	"errors"
-	"runtime"
-	"strings"
 	"unsafe"
 )
 
 const maxWebpHeaderSize = 1024
-
-// Go1.3: Changes to the garbage collector
-// http://golang.org/doc/go1.3#garbage_collector
-
-var cgoIsUnsafePtr = func() bool {
-	if strings.HasPrefix(runtime.Version(), "go1.0") {
-		return false
-	}
-	if strings.HasPrefix(runtime.Version(), "go1.1") {
-		return false
-	}
-	if strings.HasPrefix(runtime.Version(), "go1.2") {
-		return false
-	}
-	if strings.HasPrefix(runtime.Version(), "go1.3") {
-		return true // Go1.3 use contiguous stack, need move stack.
-	}
-	return true
-}()
-
-func cgoSafePtr(data []byte) unsafe.Pointer {
-	if len(data) == 0 {
-		return nil
-	}
-	if cgoIsUnsafePtr {
-		p := C.malloc(C.size_t(len(data)))
-		C.memcpy(p, unsafe.Pointer(&data[0]), C.size_t(len(data)))
-		return p
-	} else {
-		p := unsafe.Pointer(&data[0])
-		return p
-	}
-}
-
-func cgoFreePtr(p unsafe.Pointer) {
-	if cgoIsUnsafePtr && p != nil {
-		C.free(p)
-	}
-}
 
 func webpGetInfo(data []byte) (width, height int, has_alpha bool, err error) {
 	if len(data) == 0 {

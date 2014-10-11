@@ -5,7 +5,6 @@
 package webp
 
 // #include <stdlib.h>
-// #include <string.h>
 import "C"
 import "unsafe"
 
@@ -18,7 +17,7 @@ func cgoSafePtr(data []byte) unsafe.Pointer {
 	}
 	if cgoIsUnsafePtr {
 		p := C.malloc(C.size_t(len(data)))
-		C.memcpy(p, unsafe.Pointer(&data[0]), C.size_t(len(data)))
+		copy(((*[1 << 30]byte)(p))[0:len(data):len(data)], data)
 		return p
 	} else {
 		p := unsafe.Pointer(&data[0])

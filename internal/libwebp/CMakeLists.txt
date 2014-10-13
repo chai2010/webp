@@ -140,8 +140,8 @@ set(WEBP_UTILS_ENC_SRC
 )
 
 set(WEBP_SRC
-  ./src/webp_api.c
   ./include/webp.h
+  ./src/webp.c
 
   ${WEBP_DEC_SRC}
   ${WEBP_DEMUX_SRC}

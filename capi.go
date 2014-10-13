@@ -5,7 +5,7 @@
 package webp
 
 /*
-#cgo CFLAGS: -I./libwebp/include  -I./libwebp/src
+#cgo CFLAGS: -I./internal/libwebp/include  -I./internal/libwebp/src
 #cgo !windows LDFLAGS: -lm
 
 #include "webp.h"

@@ -133,7 +133,7 @@ import (
 	"unsafe"
 )
 
-const maxWebpHeaderSize = 1024
+const maxWebpHeaderSize = 32
 
 func webpGetInfo(data []byte) (width, height int, has_alpha bool, err error) {
 	if len(data) == 0 {

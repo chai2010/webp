@@ -18,13 +18,13 @@ int webpGetInfo(
 	if (WebPGetFeatures(data, data_size, &features) != VP8_STATUS_OK) {
 		return 0;
 	}
-	if (width != NULL) {
+	if(width != NULL) {
 		*width  = features.width;
 	}
-	if (height != NULL) {
+	if(height != NULL) {
 		*height = features.height;
 	}
-	if (has_alpha != NULL) {
+	if(has_alpha != NULL) {
 		*has_alpha = features.has_alpha;
 	}
 	return 1;

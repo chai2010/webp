@@ -27,6 +27,10 @@ func Encode(w io.Writer, m image.Image, opt *Options) (err error) {
 			if output, err = EncodeLosslessGray(m); err != nil {
 				return
 			}
+		case *RGB:
+			if output, err = EncodeLosslessRGB(m); err != nil {
+				return
+			}
 		case *image.RGBA:
 			if output, err = EncodeLosslessRGBA(m); err != nil {
 				return
@@ -44,6 +48,10 @@ func Encode(w io.Writer, m image.Image, opt *Options) (err error) {
 			if output, err = EncodeGray(m, quality); err != nil {
 				return
 			}
+		case *RGB:
+			if output, err = EncodeRGB(m, quality); err != nil {
+				return
+			}
 		case *image.RGBA:
 			if output, err = EncodeRGBA(m, quality); err != nil {
 				return
@@ -58,7 +66,7 @@ func Encode(w io.Writer, m image.Image, opt *Options) (err error) {
 
 func adjustImage(m image.Image) image.Image {
 	switch m := m.(type) {
-	case *image.Gray, *image.RGBA:
+	case *image.Gray, *image.RGBA, *RGB:
 		return m
 	default:
 		b := m.Bounds()

@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	. "github.com/chai2010/assert"
+	. "github.com/chai2010/webp/internal/assert"
 )
 
 func TestAssert(t *testing.T) {

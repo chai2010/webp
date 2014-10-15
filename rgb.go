@@ -9,10 +9,10 @@ import (
 	"image/color"
 )
 
-// RGB is an in-memory image whose At method returns color.RGBA values.
+// _RGB is an in-memory image whose At method returns color.RGBA values.
 //
-// Notes: RGB use the same struct with image.RGBA!!!
-type RGB struct {
+// Notes: _RGB use the same struct with image.RGBA!!!
+type _RGB struct {
 	// Pix holds the image's pixels, in R, G, B order. The pixel at
 	// (x, y) starts at Pix[(y-Rect.Min.Y)*Stride + (x-Rect.Min.X)*3].
 	Pix []uint8
@@ -22,15 +22,15 @@ type RGB struct {
 	Rect image.Rectangle
 }
 
-func (p *RGB) ColorModel() color.Model { return color.RGBAModel }
+func (p *_RGB) ColorModel() color.Model { return color.RGBAModel }
 
-func (p *RGB) Bounds() image.Rectangle { return p.Rect }
+func (p *_RGB) Bounds() image.Rectangle { return p.Rect }
 
-func (p *RGB) At(x, y int) color.Color {
+func (p *_RGB) At(x, y int) color.Color {
 	return p.RGBAAt(x, y)
 }
 
-func (p *RGB) RGBAAt(x, y int) color.RGBA {
+func (p *_RGB) RGBAAt(x, y int) color.RGBA {
 	if !(image.Point{x, y}.In(p.Rect)) {
 		return color.RGBA{}
 	}
@@ -40,11 +40,11 @@ func (p *RGB) RGBAAt(x, y int) color.RGBA {
 
 // PixOffset returns the index of the first element of Pix that corresponds to
 // the pixel at (x, y).
-func (p *RGB) PixOffset(x, y int) int {
+func (p *_RGB) PixOffset(x, y int) int {
 	return (y-p.Rect.Min.Y)*p.Stride + (x-p.Rect.Min.X)*3
 }
 
-func (p *RGB) Set(x, y int, c color.Color) {
+func (p *_RGB) Set(x, y int, c color.Color) {
 	if !(image.Point{x, y}.In(p.Rect)) {
 		return
 	}
@@ -55,7 +55,7 @@ func (p *RGB) Set(x, y int, c color.Color) {
 	p.Pix[i+2] = c1.B
 }
 
-func (p *RGB) SetRGBA(x, y int, c color.RGBA) {
+func (p *_RGB) SetRGBA(x, y int, c color.RGBA) {
 	if !(image.Point{x, y}.In(p.Rect)) {
 		return
 	}
@@ -67,16 +67,16 @@ func (p *RGB) SetRGBA(x, y int, c color.RGBA) {
 
 // SubImage returns an image representing the portion of the image p visible
 // through r. The returned value shares pixels with the original image.
-func (p *RGB) SubImage(r image.Rectangle) image.Image {
+func (p *_RGB) SubImage(r image.Rectangle) image.Image {
 	r = r.Intersect(p.Rect)
 	// If r1 and r2 are Rectangles, r1.Intersect(r2) is not guaranteed to be inside
 	// either r1 or r2 if the intersection is empty. Without explicitly checking for
 	// this, the Pix[i:] expression below can panic.
 	if r.Empty() {
-		return &RGB{}
+		return &_RGB{}
 	}
 	i := p.PixOffset(r.Min.X, r.Min.Y)
-	return &RGB{
+	return &_RGB{
 		Pix:    p.Pix[i:],
 		Stride: p.Stride,
 		Rect:   r,
@@ -84,7 +84,7 @@ func (p *RGB) SubImage(r image.Rectangle) image.Image {
 }
 
 // Opaque scans the entire image and reports whether it is fully opaque.
-func (p *RGB) Opaque() bool {
+func (p *_RGB) Opaque() bool {
 	if p.Rect.Empty() {
 		return true
 	}
@@ -101,9 +101,31 @@ func (p *RGB) Opaque() bool {
 	return true
 }
 
-// NewRGB returns a new RGB with the given bounds.
-func NewRGB(r image.Rectangle) *RGB {
+// newRGB returns a new _RGB with the given bounds.
+func newRGB(r image.Rectangle) *_RGB {
 	w, h := r.Dx(), r.Dy()
 	buf := make([]uint8, 3*w*h)
-	return &RGB{buf, 3 * w, r}
+	return &_RGB{buf, 3 * w, r}
+}
+
+func newRGBFromImage(m image.Image) *_RGB {
+	switch m := m.(type) {
+	case *_RGB:
+		return m
+	default:
+		b := m.Bounds()
+		rgb := newRGB(b)
+		dstColorRGBA64 := &color.RGBA64{}
+		dstColor := color.Color(dstColorRGBA64)
+		for y := b.Min.Y; y < b.Max.Y; y++ {
+			for x := b.Min.X; x < b.Max.X; x++ {
+				pr, pg, pb, _ := m.At(x, y).RGBA()
+				dstColorRGBA64.R = uint16(pr)
+				dstColorRGBA64.G = uint16(pg)
+				dstColorRGBA64.B = uint16(pb)
+				rgb.Set(x, y, dstColor)
+			}
+		}
+		return rgb
+	}
 }

@@ -15,6 +15,8 @@ and then run these commands:
 Example
 =======
 
+This is a simple example:
+
 ```Go
 package main
 
@@ -58,6 +60,39 @@ func main() {
 		log.Fatal(err)
 	}
 	fmt.Printf("Save output.webp ok\n")
+}
+```
+
+Decode and Encode as RGB format:
+
+```Go
+m, err := webp.DecodeRGB(data)
+if err != nil {
+	log.Fatal(err)
+}
+
+data, err := webp.EncodeRGB(m)
+if err != nil {
+	log.Fatal(err)
+}
+```
+
+Use `m.Pix` form `webp.Image` interface:
+
+```Go
+m, _ := webp.DecodeRGB(data)
+rgb := m.(webp.Image)
+b := rgb.Bounds()
+
+for y := b.Min.Y; y < b.Max.Y; y++ {
+	off := (y-b.Min.Y)*rgb.Stride()
+	pix := rgb.Pix()[off:][:rgb.Stride()]
+	for i := 0; i < len(pix); i += 3 {
+		R := pix[i+0]
+		G := pix[i+1]
+		B := pix[i+2]
+		...
+	}
 }
 ```
 

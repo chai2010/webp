@@ -2,10 +2,6 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package webp implements a decoder and encoder for WEBP images.
-//
-// WEBP is defined at:
-// https://developers.google.com/speed/webp/docs/riff_container
 package webp
 
 import (
@@ -35,9 +31,9 @@ func DecodeRGB(data []byte) (m image.Image, err error) {
 		return
 	}
 	m = &_RGB{
-		Pix:    pix,
-		Stride: 3 * w,
-		Rect:   image.Rect(0, 0, w, h),
+		_Pix:    pix,
+		_Stride: 3 * w,
+		_Rect:   image.Rect(0, 0, w, h),
 	}
 	return
 }
@@ -61,7 +57,7 @@ func EncodeGray(m *image.Gray, quality float32) (data []byte, err error) {
 
 func EncodeRGB(m image.Image, quality float32) (data []byte, err error) {
 	p := newRGBFromImage(m)
-	return webpEncodeRGB(p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride, quality)
+	return webpEncodeRGB(p._Pix, p._Rect.Dx(), p._Rect.Dy(), p._Stride, quality)
 }
 
 func EncodeRGBA(m *image.RGBA, quality float32) (data []byte, err error) {
@@ -74,7 +70,7 @@ func EncodeLosslessGray(m *image.Gray) (data []byte, err error) {
 
 func EncodeLosslessRGB(m image.Image) (data []byte, err error) {
 	p := newRGBFromImage(m)
-	return webpEncodeLosslessRGB(p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride)
+	return webpEncodeLosslessRGB(p._Pix, p._Rect.Dx(), p._Rect.Dy(), p._Stride)
 }
 
 func EncodeLosslessRGBA(m *image.RGBA) (data []byte, err error) {

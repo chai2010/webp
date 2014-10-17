@@ -8,6 +8,7 @@ import (
 	"image"
 	"image/color"
 	"io"
+	"reflect"
 )
 
 const DefaulQuality = 90
@@ -65,27 +66,55 @@ func Encode(w io.Writer, m image.Image, opt *Options) (err error) {
 }
 
 func adjustImage(m image.Image) image.Image {
-	if x, ok := m.(Image); ok {
-		m = x.BaseType()
-	}
 	switch m := m.(type) {
 	case *image.Gray, *image.RGBA, *_RGB:
 		return m
-	default:
-		b := m.Bounds()
-		rgba := image.NewRGBA(b)
-		dstColorRGBA64 := &color.RGBA64{}
-		dstColor := color.Color(dstColorRGBA64)
-		for y := b.Min.Y; y < b.Max.Y; y++ {
-			for x := b.Min.X; x < b.Max.X; x++ {
-				pr, pg, pb, pa := m.At(x, y).RGBA()
-				dstColorRGBA64.R = uint16(pr)
-				dstColorRGBA64.G = uint16(pg)
-				dstColorRGBA64.B = uint16(pb)
-				dstColorRGBA64.A = uint16(pa)
-				rgba.Set(x, y, dstColor)
+	}
+
+	// try `Image` interface
+	if x, ok := m.(Image); ok {
+		// try original type
+		switch m := x.BaseType().(type) {
+		case *image.Gray, *image.RGBA, *_RGB:
+			return m
+		}
+		// create new image with `x.Pix()`
+		switch {
+		case x.Channels() == 1 && x.Depth() == reflect.Uint8:
+			return &image.Gray{
+				Pix:    x.Pix(),
+				Stride: x.Stride(),
+				Rect:   x.Rect(),
+			}
+		case x.Channels() == 3 && x.Depth() == reflect.Uint8:
+			return &_RGB{
+				Pix:    x.Pix(),
+				Stride: x.Stride(),
+				Rect:   x.Rect(),
+			}
+		case x.Channels() == 4 && x.Depth() == reflect.Uint8:
+			return &image.RGBA{
+				Pix:    x.Pix(),
+				Stride: x.Stride(),
+				Rect:   x.Rect(),
 			}
 		}
-		return rgba
 	}
+
+	// convert to RGBA
+	b := m.Bounds()
+	rgba := image.NewRGBA(b)
+	dstColorRGBA64 := &color.RGBA64{}
+	dstColor := color.Color(dstColorRGBA64)
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			pr, pg, pb, pa := m.At(x, y).RGBA()
+			dstColorRGBA64.R = uint16(pr)
+			dstColorRGBA64.G = uint16(pg)
+			dstColorRGBA64.B = uint16(pb)
+			dstColorRGBA64.A = uint16(pa)
+			rgba.Set(x, y, dstColor)
+		}
+	}
+	return rgba
 }

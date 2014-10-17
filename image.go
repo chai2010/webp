@@ -11,7 +11,8 @@ import (
 )
 
 type Image interface {
-	draw.Image
+	// Get original type, such as *image.Gray, *image.RGBA, etc.
+	BaseType() image.Image
 
 	// Pix holds the image's pixels, as pixel values in big-endian format. The pixel at
 	// (x, y) starts at Pix[(y-Rect.Min.Y)*Stride + (x-Rect.Min.X)*Channels*sizeof(DataType)].
@@ -21,8 +22,12 @@ type Image interface {
 	// Rect is the image's bounds.
 	Rect() image.Rectangle
 
+	// 1=Gray, 2=GrayA, 3=RGB, 4=RGBA
 	Channels() int
-	DataType() reflect.Kind
+	// Uint8/Uint16/Float32/...
+	Depth() reflect.Kind
+
+	draw.Image
 }
 
 var _ Image = (*_RGB)(nil)

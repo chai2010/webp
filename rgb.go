@@ -19,16 +19,12 @@ type _RGB struct {
 	_Rect   image.Rectangle
 }
 
+func (p *_RGB) BaseType() image.Image { return p }
 func (p *_RGB) Pix() []byte           { return p._Pix }
 func (p *_RGB) Stride() int           { return p._Stride }
 func (p *_RGB) Rect() image.Rectangle { return p._Rect }
-
-func (p *_RGB) Channels() int {
-	return 3
-}
-func (p *_RGB) DataType() reflect.Kind {
-	return reflect.Uint8
-}
+func (p *_RGB) Channels() int         { return 3 }
+func (p *_RGB) Depth() reflect.Kind   { return reflect.Uint8 }
 
 func (p *_RGB) ColorModel() color.Model { return color.RGBAModel }
 

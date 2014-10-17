@@ -65,6 +65,9 @@ func Encode(w io.Writer, m image.Image, opt *Options) (err error) {
 }
 
 func adjustImage(m image.Image) image.Image {
+	if x, ok := m.(Image); ok {
+		m = x.BaseType()
+	}
 	switch m := m.(type) {
 	case *image.Gray, *image.RGBA, *_RGB:
 		return m

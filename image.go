@@ -31,13 +31,3 @@ type Image interface {
 
 	draw.Image
 }
-
-var _ Image = (*_RGB)(nil)
-
-func _NewImage(r image.Rectangle, channels int, dataType reflect.Kind) (m Image, err error) {
-	panic("TODO")
-}
-
-func _NewImageFrom(m0 image.Image, deepCopy bool) (m Image, err error) {
-	panic("TODO")
-}

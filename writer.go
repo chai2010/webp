@@ -88,9 +88,9 @@ func adjustImage(m image.Image) image.Image {
 			}
 		case x.Channels() == 3 && x.Depth() == reflect.Uint8:
 			return &_RGB{
-				Pix:    x.Pix(),
-				Stride: x.Stride(),
-				Rect:   x.Rect(),
+				_Pix:    x.Pix(),
+				_Stride: x.Stride(),
+				_Rect:   x.Rect(),
 			}
 		case x.Channels() == 4 && x.Depth() == reflect.Uint8:
 			return &image.RGBA{

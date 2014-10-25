@@ -22,9 +22,11 @@ type Image interface {
 	// Rect is the image's bounds.
 	Rect() image.Rectangle
 
-	// 1=Gray, 2=GrayA, 3=RGB, 4=RGBA
+	// if Depth() != Invalid { 1:Gray, 2:GrayA, 3:RGB, 4:RGBA, N:[N]Type }
+	// if Depth() == Invalid { N:[N]byte }
 	Channels() int
-	// Uint8/Uint16/Float32/...
+	// Invalid/Uint8/Uint16/Uint32/Uint64/Int8/Int16/Int32/Int64/Float32/Float64
+	// Invalid is equal Byte type.
 	Depth() reflect.Kind
 
 	draw.Image

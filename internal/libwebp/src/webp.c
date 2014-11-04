@@ -5,6 +5,8 @@
 #include "webp.h"
 #include "webp/encode.h"
 #include "webp/decode.h"
+#include "webp/demux.h"
+#include "webp/mux.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -165,6 +167,153 @@ size_t webpEncodeLosslessRGBA(
 	uint8_t** output
 ) {
 	return WebPEncodeLosslessRGBA(rgba, width, height, stride, output);
+}
+
+char* webpGetEXIF(const uint8_t* data, size_t data_size, size_t* metadata_size) {
+	char* metadata = NULL;
+	WebPData webp_data = {data, data_size};
+	WebPDemuxer* demux = WebPDemux(&webp_data);
+	uint32_t flags = WebPDemuxGetI(demux, WEBP_FF_FORMAT_FLAGS);
+	*metadata_size = 0;
+	if(flags & EXIF_FLAG) {
+		WebPChunkIterator it;
+		memset(&it, 0, sizeof(it));
+		if(WebPDemuxGetChunk(demux, "EXIF", 1, &it)) {
+			if(it.chunk.bytes != NULL && it.chunk.size > 0) {
+				metadata = (char*)malloc(it.chunk.size);
+				memcpy(metadata, it.chunk.bytes, it.chunk.size);
+				*metadata_size = it.chunk.size;
+			}
+		}
+		WebPDemuxReleaseChunkIterator(&it);
+	}
+	WebPDemuxDelete(demux);
+	return metadata;
+}
+char* webpGetICCP(const uint8_t* data, size_t data_size, size_t* metadata_size) {
+	char* metadata = NULL;
+	WebPData webp_data = {data, data_size};
+	WebPDemuxer* demux = WebPDemux(&webp_data);
+	uint32_t flags = WebPDemuxGetI(demux, WEBP_FF_FORMAT_FLAGS);
+	*metadata_size = 0;
+	if(flags & ICCP_FLAG) {
+		WebPChunkIterator it;
+		memset(&it, 0, sizeof(it));
+		if(WebPDemuxGetChunk(demux, "ICCP", 1, &it)) {
+			if(it.chunk.bytes != NULL && it.chunk.size > 0) {
+				metadata = (char*)malloc(it.chunk.size);
+				memcpy(metadata, it.chunk.bytes, it.chunk.size);
+				*metadata_size = it.chunk.size;
+			}
+		}
+		WebPDemuxReleaseChunkIterator(&it);
+	}
+	WebPDemuxDelete(demux);
+	return metadata;
+}
+char* webpGetXMP(const uint8_t* data, size_t data_size, size_t* metadata_size) {
+	char* metadata = NULL;
+	WebPData webp_data = {data, data_size};
+	WebPDemuxer* demux = WebPDemux(&webp_data);
+	uint32_t flags = WebPDemuxGetI(demux, WEBP_FF_FORMAT_FLAGS);
+	*metadata_size = 0;
+	if(flags & XMP_FLAG) {
+		WebPChunkIterator it;
+		memset(&it, 0, sizeof(it));
+		if(WebPDemuxGetChunk(demux, "XMP ", 1, &it)) {
+			if(it.chunk.bytes != NULL && it.chunk.size > 0) {
+				metadata = (char*)malloc(it.chunk.size);
+				memcpy(metadata, it.chunk.bytes, it.chunk.size);
+				*metadata_size = it.chunk.size;
+			}
+		}
+		WebPDemuxReleaseChunkIterator(&it);
+	}
+	WebPDemuxDelete(demux);
+	return metadata;
+}
+
+uint8_t* webpSetEXIF(
+	const uint8_t* data, size_t data_size,
+	const char* metadata, size_t metadata_size,
+	size_t* new_data_size
+) {
+	WebPData image = {data, data_size};
+	WebPData profile = {metadata, metadata_size};
+	WebPData output_data = {NULL, 0};
+	WebPMux* mux = WebPMuxCreate(&image, 0);
+	if(WebPMuxSetChunk(mux, "EXIF", &profile, 0) == WEBP_MUX_OK) {
+		WebPMuxAssemble(mux, &output_data);
+	}
+	WebPMuxDelete(mux);
+	*new_data_size = output_data.size;
+	return (uint8_t*)(output_data.bytes);
+}
+uint8_t* webpSetICCP(
+	const uint8_t* data, size_t data_size,
+	const char* metadata, size_t metadata_size,
+	size_t* new_data_size
+) {
+	WebPData image = {data, data_size};
+	WebPData profile = {metadata, metadata_size};
+	WebPData output_data = {NULL, 0};
+	WebPMux* mux = WebPMuxCreate(&image, 0);
+	if(WebPMuxSetChunk(mux, "ICCP", &profile, 0) == WEBP_MUX_OK) {
+		WebPMuxAssemble(mux, &output_data);
+	}
+	WebPMuxDelete(mux);
+	*new_data_size = output_data.size;
+	return (uint8_t*)(output_data.bytes);
+}
+uint8_t* webpSetXMP(
+	const uint8_t* data, size_t data_size,
+	const char* metadata, size_t metadata_size,
+	size_t* new_data_size
+) {
+	WebPData image = {data, data_size};
+	WebPData profile = {metadata, metadata_size};
+	WebPData output_data = {NULL, 0};
+	WebPMux* mux = WebPMuxCreate(&image, 0);
+	if(WebPMuxSetChunk(mux, "XMP ", &profile, 0) == WEBP_MUX_OK) {
+		WebPMuxAssemble(mux, &output_data);
+	}
+	WebPMuxDelete(mux);
+	*new_data_size = output_data.size;
+	return (uint8_t*)(output_data.bytes);
+}
+
+uint8_t* webpDelEXIF(const uint8_t* data, size_t data_size, size_t* new_data_size) {
+	WebPData image = {data, data_size};
+	WebPData output_data = {NULL, 0};
+	WebPMux* mux = WebPMuxCreate(&image, 0);
+	if(WebPMuxDeleteChunk(mux, "EXIF") == WEBP_MUX_OK) {
+		WebPMuxAssemble(mux, &output_data);
+	}
+	WebPMuxDelete(mux);
+	*new_data_size = output_data.size;
+	return (uint8_t*)(output_data.bytes);
+}
+uint8_t* webpDelICCP(const uint8_t* data, size_t data_size, size_t* new_data_size) {
+	WebPData image = {data, data_size};
+	WebPData output_data = {NULL, 0};
+	WebPMux* mux = WebPMuxCreate(&image, 0);
+	if(WebPMuxDeleteChunk(mux, "ICCP") == WEBP_MUX_OK) {
+		WebPMuxAssemble(mux, &output_data);
+	}
+	WebPMuxDelete(mux);
+	*new_data_size = output_data.size;
+	return (uint8_t*)(output_data.bytes);
+}
+uint8_t* webpDelXMP(const uint8_t* data, size_t data_size, size_t* new_data_size) {
+	WebPData image = {data, data_size};
+	WebPData output_data = {NULL, 0};
+	WebPMux* mux = WebPMuxCreate(&image, 0);
+	if(WebPMuxDeleteChunk(mux, "XMP ") == WEBP_MUX_OK) {
+		WebPMuxAssemble(mux, &output_data);
+	}
+	WebPMuxDelete(mux);
+	*new_data_size = output_data.size;
+	return (uint8_t*)(output_data.bytes);
 }
 
 void webpFree(void* p) {

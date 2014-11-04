@@ -6,6 +6,7 @@ package webp
 
 import (
 	"image"
+	"strings"
 )
 
 func GetInfo(data []byte) (width, height int, hasAlpha bool, err error) {
@@ -71,4 +72,14 @@ func EncodeLosslessRGB(m image.Image) (data []byte, err error) {
 
 func EncodeLosslessRGBA(m *image.RGBA) (data []byte, err error) {
 	return webpEncodeLosslessRGBA(m.Pix, m.Rect.Dx(), m.Rect.Dy(), m.Stride)
+}
+
+// GetMetadata return EXIF/ICCP/XMP format metadata.
+func GetMetadata(data []byte, format string) (metadata []byte, err error) {
+	return webpGetMetadata(data, strings.ToUpper(format))
+}
+
+// SetMetadata set EXIF/ICCP/XMP format metadata.
+func SetMetadata(data, metadata []byte, format string) (newData []byte, err error) {
+	return webpSetMetadata(data, metadata, format)
 }

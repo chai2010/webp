@@ -126,6 +126,99 @@ struct cgoWebpEncodeLosslessRGBAReturn {
 	return t;
 }
 
+struct cgoWebpGetEXIFReturn {
+	int ok;
+	size_t size;
+	uint8_t* ptr;
+} cgoWebpGetEXIF(const uint8_t* data, size_t data_size) {
+	struct cgoWebpGetEXIFReturn t;
+	t.ptr = webpGetEXIF(data, data_size, &t.size);
+	t.ok = (t.size != 0)? 1: 0;
+	return t;
+}
+struct cgoWebpGetICCPReturn {
+	int ok;
+	size_t size;
+	uint8_t* ptr;
+} cgoWebpGetICCP(const uint8_t* data, size_t data_size) {
+	struct cgoWebpGetICCPReturn t;
+	t.ptr = webpGetICCP(data, data_size, &t.size);
+	t.ok = (t.size != 0)? 1: 0;
+	return t;
+}
+struct cgoWebpGetXMPReturn {
+	int ok;
+	size_t size;
+	uint8_t* ptr;
+} cgoWebpGetXMP(const uint8_t* data, size_t data_size) {
+	struct cgoWebpGetXMPReturn t;
+	t.ptr = webpGetXMP(data, data_size, &t.size);
+	t.ok = (t.size != 0)? 1: 0;
+	return t;
+}
+
+struct cgoWebpSetEXIFReturn {
+	int ok;
+	size_t size;
+	uint8_t* ptr;
+} cgoWebpSetEXIF(const uint8_t* data, size_t data_size, const char* metadata, size_t metadata_size) {
+	struct cgoWebpSetEXIFReturn t;
+	t.ptr = webpSetEXIF(data, data_size, metadata, metadata_size, &t.size);
+	t.ok = (t.size != 0)? 1: 0;
+	return t;
+}
+struct cgoWebpSetICCPReturn {
+	int ok;
+	size_t size;
+	uint8_t* ptr;
+} cgoWebpSetICCP(const uint8_t* data, size_t data_size, const char* metadata, size_t metadata_size) {
+	struct cgoWebpSetICCPReturn t;
+	t.ptr = webpSetICCP(data, data_size, metadata, metadata_size, &t.size);
+	t.ok = (t.size != 0)? 1: 0;
+	return t;
+}
+struct cgoWebpSetXMPReturn {
+	int ok;
+	size_t size;
+	uint8_t* ptr;
+} cgoWebpSetXMP(const uint8_t* data, size_t data_size, const char* metadata, size_t metadata_size) {
+	struct cgoWebpSetXMPReturn t;
+	t.ptr = webpSetXMP(data, data_size, metadata, metadata_size, &t.size);
+	t.ok = (t.size != 0)? 1: 0;
+	return t;
+}
+
+struct cgoWebpDelEXIFReturn {
+	int ok;
+	size_t size;
+	uint8_t* ptr;
+} cgoWebpDelEXIF(const uint8_t* data, size_t data_size) {
+	struct cgoWebpDelEXIFReturn t;
+	t.ptr = webpDelEXIF(data, data_size, &t.size);
+	t.ok = (t.size != 0)? 1: 0;
+	return t;
+}
+struct cgoWebpDelICCPReturn {
+	int ok;
+	size_t size;
+	uint8_t* ptr;
+} cgoWebpDelICCP(const uint8_t* data, size_t data_size) {
+	struct cgoWebpDelICCPReturn t;
+	t.ptr = webpDelICCP(data, data_size, &t.size);
+	t.ok = (t.size != 0)? 1: 0;
+	return t;
+}
+struct cgoWebpDelXMPReturn {
+	int ok;
+	size_t size;
+	uint8_t* ptr;
+} cgoWebpDelXMP(const uint8_t* data, size_t data_size) {
+	struct cgoWebpDelXMPReturn t;
+	t.ptr = webpDelXMP(data, data_size, &t.size);
+	t.ok = (t.size != 0)? 1: 0;
+	return t;
+}
+
 */
 import "C"
 import (
@@ -392,6 +485,276 @@ func webpEncodeLosslessRGBA(
 
 	output = make([]byte, int(rv.size))
 	copy(output, ((*[1 << 30]byte)(unsafe.Pointer(rv.ptr)))[0:len(output):len(output)])
+	C.webpFree(unsafe.Pointer(rv.ptr))
+	return
+}
+
+func webpGetEXIF(data []byte) (metadata []byte, err error) {
+	if len(data) == 0 {
+		err = errors.New("webpGetEXIF: bad arguments")
+		return
+	}
+	cData := cgoSafePtr(data)
+	defer cgoFreePtr(cData)
+
+	rv := C.cgoWebpGetEXIF((*C.uint8_t)(cData), C.size_t(len(data)))
+	if rv.ok != 1 {
+		err = errors.New("webpGetEXIF: failed")
+		return
+	}
+	metadata = C.GoBytes(unsafe.Pointer(rv.ptr), C.int(rv.size))
+	C.webpFree(unsafe.Pointer(rv.ptr))
+	return
+}
+func webpGetICCP(data []byte) (metadata []byte, err error) {
+	if len(data) == 0 {
+		err = errors.New("webpGetICCP: bad arguments")
+		return
+	}
+	cData := cgoSafePtr(data)
+	defer cgoFreePtr(cData)
+
+	rv := C.cgoWebpGetICCP((*C.uint8_t)(cData), C.size_t(len(data)))
+	if rv.ok != 1 {
+		err = errors.New("webpGetICCP: failed")
+		return
+	}
+	metadata = C.GoBytes(unsafe.Pointer(rv.ptr), C.int(rv.size))
+	C.webpFree(unsafe.Pointer(rv.ptr))
+	return
+}
+func webpGetXMP(data []byte) (metadata []byte, err error) {
+	if len(data) == 0 {
+		err = errors.New("webpGetXMP: bad arguments")
+		return
+	}
+	cData := cgoSafePtr(data)
+	defer cgoFreePtr(cData)
+
+	rv := C.cgoWebpGetXMP((*C.uint8_t)(cData), C.size_t(len(data)))
+	if rv.ok != 1 {
+		err = errors.New("webpGetXMP: failed")
+		return
+	}
+	metadata = C.GoBytes(unsafe.Pointer(rv.ptr), C.int(rv.size))
+	C.webpFree(unsafe.Pointer(rv.ptr))
+	return
+}
+func webpGetMetadata(data []byte, format string) (metadata []byte, err error) {
+	if len(data) == 0 {
+		err = errors.New("webpGetMetadata: bad arguments")
+		return
+	}
+	cData := cgoSafePtr(data)
+	defer cgoFreePtr(cData)
+
+	switch format {
+	case "EXIF":
+		rv := C.cgoWebpGetEXIF((*C.uint8_t)(cData), C.size_t(len(data)))
+		if rv.ok != 1 {
+			err = errors.New("webpGetMetadata: not found")
+			return
+		}
+		metadata = C.GoBytes(unsafe.Pointer(rv.ptr), C.int(rv.size))
+		C.webpFree(unsafe.Pointer(rv.ptr))
+		return
+	case "ICCP":
+		rv := C.cgoWebpGetICCP((*C.uint8_t)(cData), C.size_t(len(data)))
+		if rv.ok != 1 {
+			err = errors.New("webpGetMetadata: not found")
+			return
+		}
+		metadata = C.GoBytes(unsafe.Pointer(rv.ptr), C.int(rv.size))
+		C.webpFree(unsafe.Pointer(rv.ptr))
+		return
+	case "XMP":
+		rv := C.cgoWebpGetXMP((*C.uint8_t)(cData), C.size_t(len(data)))
+		if rv.ok != 1 {
+			err = errors.New("webpGetMetadata: not found")
+			return
+		}
+		metadata = C.GoBytes(unsafe.Pointer(rv.ptr), C.int(rv.size))
+		C.webpFree(unsafe.Pointer(rv.ptr))
+		return
+	default:
+		err = errors.New("webpGetMetadata: unknown format")
+		return
+	}
+}
+
+func webpSetEXIF(data, metadata []byte) (newData []byte, err error) {
+	if len(data) == 0 || len(metadata) == 0 {
+		err = errors.New("webpSetEXIF: bad arguments")
+		return
+	}
+	cData := cgoSafePtr(data)
+	defer cgoFreePtr(cData)
+	cMetadata := cgoSafePtr(metadata)
+	defer cgoFreePtr(cMetadata)
+
+	rv := C.cgoWebpSetEXIF(
+		(*C.uint8_t)(cData), C.size_t(len(data)),
+		(*C.char)(cMetadata), C.size_t(len(metadata)),
+	)
+	if rv.ok != 1 {
+		err = errors.New("webpSetEXIF: failed")
+		return
+	}
+	newData = C.GoBytes(unsafe.Pointer(rv.ptr), C.int(rv.size))
+	C.webpFree(unsafe.Pointer(rv.ptr))
+	return
+}
+func webpSetICCP(data, metadata []byte) (newData []byte, err error) {
+	if len(data) == 0 || len(metadata) == 0 {
+		err = errors.New("webpSetICCP: bad arguments")
+		return
+	}
+	cData := cgoSafePtr(data)
+	defer cgoFreePtr(cData)
+	cMetadata := cgoSafePtr(metadata)
+	defer cgoFreePtr(cMetadata)
+
+	rv := C.cgoWebpSetICCP(
+		(*C.uint8_t)(cData), C.size_t(len(data)),
+		(*C.char)(cMetadata), C.size_t(len(metadata)),
+	)
+	if rv.ok != 1 {
+		err = errors.New("webpSetICCP: failed")
+		return
+	}
+	newData = C.GoBytes(unsafe.Pointer(rv.ptr), C.int(rv.size))
+	C.webpFree(unsafe.Pointer(rv.ptr))
+	return
+}
+func webpSetXMP(data, metadata []byte) (newData []byte, err error) {
+	if len(data) == 0 || len(metadata) == 0 {
+		err = errors.New("webpSetXMP: bad arguments")
+		return
+	}
+	cData := cgoSafePtr(data)
+	defer cgoFreePtr(cData)
+	cMetadata := cgoSafePtr(metadata)
+	defer cgoFreePtr(cMetadata)
+
+	rv := C.cgoWebpSetXMP(
+		(*C.uint8_t)(cData), C.size_t(len(data)),
+		(*C.char)(cMetadata), C.size_t(len(metadata)),
+	)
+	if rv.ok != 1 {
+		err = errors.New("webpSetXMP: failed")
+		return
+	}
+	newData = C.GoBytes(unsafe.Pointer(rv.ptr), C.int(rv.size))
+	C.webpFree(unsafe.Pointer(rv.ptr))
+	return
+}
+func webpSetMetadata(data, metadata []byte, format string) (newData []byte, err error) {
+	if len(data) == 0 || len(metadata) == 0 {
+		err = errors.New("webpSetMetadata: bad arguments")
+		return
+	}
+	cData := cgoSafePtr(data)
+	defer cgoFreePtr(cData)
+	cMetadata := cgoSafePtr(metadata)
+	defer cgoFreePtr(cMetadata)
+
+	switch format {
+	case "EXIF":
+		rv := C.cgoWebpSetEXIF(
+			(*C.uint8_t)(cData), C.size_t(len(data)),
+			(*C.char)(cMetadata), C.size_t(len(metadata)),
+		)
+		if rv.ok != 1 {
+			err = errors.New("webpSetMetadata: failed")
+			return
+		}
+		newData = C.GoBytes(unsafe.Pointer(rv.ptr), C.int(rv.size))
+		C.webpFree(unsafe.Pointer(rv.ptr))
+		return
+	case "ICCP":
+		rv := C.cgoWebpSetICCP(
+			(*C.uint8_t)(cData), C.size_t(len(data)),
+			(*C.char)(cMetadata), C.size_t(len(metadata)),
+		)
+		if rv.ok != 1 {
+			err = errors.New("webpSetMetadata: failed")
+			return
+		}
+		newData = C.GoBytes(unsafe.Pointer(rv.ptr), C.int(rv.size))
+		C.webpFree(unsafe.Pointer(rv.ptr))
+		return
+	case "XMP":
+		rv := C.cgoWebpSetXMP(
+			(*C.uint8_t)(cData), C.size_t(len(data)),
+			(*C.char)(cMetadata), C.size_t(len(metadata)),
+		)
+		if rv.ok != 1 {
+			err = errors.New("webpSetMetadata: failed")
+			return
+		}
+		newData = C.GoBytes(unsafe.Pointer(rv.ptr), C.int(rv.size))
+		C.webpFree(unsafe.Pointer(rv.ptr))
+		return
+	default:
+		err = errors.New("webpSetMetadata: unknown format")
+		return
+	}
+}
+
+func webpDelEXIF(data []byte) (newData []byte, err error) {
+	if len(data) == 0 {
+		err = errors.New("webpDelEXIF: bad arguments")
+		return
+	}
+	cData := cgoSafePtr(data)
+	defer cgoFreePtr(cData)
+
+	rv := C.cgoWebpDelEXIF(
+		(*C.uint8_t)(cData), C.size_t(len(data)),
+	)
+	if rv.ok != 1 {
+		err = errors.New("webpDelEXIF: failed")
+		return
+	}
+	newData = C.GoBytes(unsafe.Pointer(rv.ptr), C.int(rv.size))
+	C.webpFree(unsafe.Pointer(rv.ptr))
+	return
+}
+func webpDelICCP(data []byte) (newData []byte, err error) {
+	if len(data) == 0 {
+		err = errors.New("webpDelICCP: bad arguments")
+		return
+	}
+	cData := cgoSafePtr(data)
+	defer cgoFreePtr(cData)
+
+	rv := C.cgoWebpDelICCP(
+		(*C.uint8_t)(cData), C.size_t(len(data)),
+	)
+	if rv.ok != 1 {
+		err = errors.New("webpDelICCP: failed")
+		return
+	}
+	newData = C.GoBytes(unsafe.Pointer(rv.ptr), C.int(rv.size))
+	C.webpFree(unsafe.Pointer(rv.ptr))
+	return
+}
+func webpDelXMP(data []byte) (newData []byte, err error) {
+	if len(data) == 0 {
+		err = errors.New("webpDelXMP: bad arguments")
+		return
+	}
+	cData := cgoSafePtr(data)
+	defer cgoFreePtr(cData)
+
+	rv := C.cgoWebpDelXMP(
+		(*C.uint8_t)(cData), C.size_t(len(data)),
+	)
+	if rv.ok != 1 {
+		err = errors.New("webpDelXMP: failed")
+		return
+	}
+	newData = C.GoBytes(unsafe.Pointer(rv.ptr), C.int(rv.size))
 	C.webpFree(unsafe.Pointer(rv.ptr))
 	return
 }

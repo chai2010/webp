@@ -57,6 +57,18 @@ size_t webpEncodeLosslessRGBA(
 	uint8_t** output
 );
 
+char* webpGetEXIF(const uint8_t* data, size_t data_size, size_t* metadata_size);
+char* webpGetICCP(const uint8_t* data, size_t data_size, size_t* metadata_size);
+char* webpGetXMP(const uint8_t* data, size_t data_size, size_t* metadata_size);
+
+uint8_t* webpSetEXIF(const uint8_t* data, size_t data_size, const char* metadata, size_t metadata_size, size_t* new_data_size);
+uint8_t* webpSetICCP(const uint8_t* data, size_t data_size, const char* metadata, size_t metadata_size, size_t* new_data_size);
+uint8_t* webpSetXMP(const uint8_t* data, size_t data_size, const char* metadata, size_t metadata_size, size_t* new_data_size);
+
+uint8_t* webpDelEXIF(const uint8_t* data, size_t data_size, size_t* new_data_size);
+uint8_t* webpDelICCP(const uint8_t* data, size_t data_size, size_t* new_data_size);
+uint8_t* webpDelXMP(const uint8_t* data, size_t data_size, size_t* new_data_size);
+
 void webpFree(void* p);
 
 #ifdef __cplusplus

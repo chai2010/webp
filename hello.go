@@ -32,6 +32,13 @@ func main() {
 	}
 	fmt.Printf("width = %d, height = %d\n", width, height)
 
+	// GetMetadata
+	if metadata, err := webp.GetMetadata(data, "ICCP"); err != nil {
+		fmt.Printf("Metadata: err = %v\n", err)
+	} else {
+		fmt.Printf("Metadata: %s\n", string(metadata))
+	}
+
 	// Decode webp
 	m, err := webp.Decode(bytes.NewReader(data))
 	if err != nil {

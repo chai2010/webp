@@ -19,6 +19,10 @@ type Options struct {
 	Quality  float32 // 0 ~ 100
 }
 
+type colorModeler interface {
+	ColorModel() color.Model
+}
+
 // Encode writes the image m to w in WEBP format.
 func Encode(w io.Writer, m image.Image, opt *Options) (err error) {
 	var output []byte
@@ -95,9 +99,45 @@ func adjustImage(m image.Image) image.Image {
 				Rect:   x.Rect(),
 			}
 		}
+
+		// convert to Gray/RGB/RGBA
+		switch x.Channels() {
+		case 1:
+			return toGrayImage(m)
+		case 3:
+			return newRGBFromImage(m)
+		default:
+			return toRGBAImage(m)
+		}
+	}
+
+	// convert to Gray/RGBA
+	if c, ok := m.(colorModeler); ok {
+		switch c.ColorModel() {
+		case color.GrayModel, color.Gray16Model:
+			return toGrayImage(m)
+		default:
+			return toRGBAImage(m)
+		}
 	}
 
 	// convert to RGBA
+	return toRGBAImage(m)
+}
+
+func toGrayImage(m image.Image) *image.Gray {
+	b := m.Bounds()
+	gray := image.NewGray(b)
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			c := color.GrayModel.Convert(m.At(x, y)).(color.Gray)
+			gray.SetGray(x, y, c)
+		}
+	}
+	return gray
+}
+
+func toRGBAImage(m image.Image) *image.RGBA {
 	b := m.Bounds()
 	rgba := image.NewRGBA(b)
 	dstColorRGBA64 := &color.RGBA64{}

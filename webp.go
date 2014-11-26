@@ -9,6 +9,10 @@ import (
 	"strings"
 )
 
+const (
+	maxWebpHeaderSize = 32
+)
+
 func GetInfo(data []byte) (width, height int, hasAlpha bool, err error) {
 	return webpGetInfo(data)
 }

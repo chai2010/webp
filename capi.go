@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build cgo
+
 package webp
 
 /*
@@ -225,8 +227,6 @@ import (
 	"errors"
 	"unsafe"
 )
-
-const maxWebpHeaderSize = 32
 
 func webpGetInfo(data []byte) (width, height int, has_alpha bool, err error) {
 	if len(data) == 0 {

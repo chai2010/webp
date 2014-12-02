@@ -29,6 +29,9 @@ Install Pure Go Version
 2. `go get github.com/chai2010/webp`
 3. `go run hello.go`
 
+Note: Only support `Decode` and `DecodeConfig`, `go test` will failed on some else api test.
+
+
 Example
 =======
 

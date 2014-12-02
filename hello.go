@@ -23,12 +23,12 @@ func main() {
 
 	// Load file data
 	if data, err = ioutil.ReadFile("./testdata/1_webp_ll.webp"); err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	// GetInfo
 	if width, height, _, err = webp.GetInfo(data); err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	fmt.Printf("width = %d, height = %d\n", width, height)
 
@@ -42,15 +42,14 @@ func main() {
 	// Decode webp
 	m, err := webp.Decode(bytes.NewReader(data))
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	// Encode lossless webp
 	if err = webp.Encode(&buf, m, &webp.Options{Lossless: true}); err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 	if err = ioutil.WriteFile("output.webp", buf.Bytes(), 0666); err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
-	fmt.Printf("Save output.webp ok\n")
 }

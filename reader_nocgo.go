@@ -4,7 +4,7 @@
 
 // +build !cgo
 
-package webp
+package webp // import "github.com/chai2010/webp"
 
 import (
 	"image"

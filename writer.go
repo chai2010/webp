@@ -96,6 +96,9 @@ func adjustImage(m image.Image) image.Image {
 }
 
 func toGrayImage(m image.Image) *image.Gray {
+	if m, ok := m.(*image.Gray); ok {
+		return m
+	}
 	b := m.Bounds()
 	gray := image.NewGray(b)
 	for y := b.Min.Y; y < b.Max.Y; y++ {
@@ -108,6 +111,9 @@ func toGrayImage(m image.Image) *image.Gray {
 }
 
 func toRGBAImage(m image.Image) *image.RGBA {
+	if m, ok := m.(*image.RGBA); ok {
+		return m
+	}
 	b := m.Bounds()
 	rgba := image.NewRGBA(b)
 	dstColorRGBA64 := &color.RGBA64{}

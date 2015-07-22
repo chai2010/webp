@@ -56,8 +56,9 @@ func DecodeRGBA(data []byte) (m *image.RGBA, err error) {
 	return
 }
 
-func EncodeGray(m *image.Gray, quality float32) (data []byte, err error) {
-	return webpEncodeGray(m.Pix, m.Rect.Dx(), m.Rect.Dy(), m.Stride, quality)
+func EncodeGray(m image.Image, quality float32) (data []byte, err error) {
+	p := toGrayImage(m)
+	return webpEncodeGray(p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride, quality)
 }
 
 func EncodeRGB(m image.Image, quality float32) (data []byte, err error) {
@@ -65,12 +66,14 @@ func EncodeRGB(m image.Image, quality float32) (data []byte, err error) {
 	return webpEncodeRGB(p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride, quality)
 }
 
-func EncodeRGBA(m *image.RGBA, quality float32) (data []byte, err error) {
-	return webpEncodeRGBA(m.Pix, m.Rect.Dx(), m.Rect.Dy(), m.Stride, quality)
+func EncodeRGBA(m image.Image, quality float32) (data []byte, err error) {
+	p := toRGBAImage(m)
+	return webpEncodeRGBA(p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride, quality)
 }
 
-func EncodeLosslessGray(m *image.Gray) (data []byte, err error) {
-	return webpEncodeLosslessGray(m.Pix, m.Rect.Dx(), m.Rect.Dy(), m.Stride)
+func EncodeLosslessGray(m image.Image) (data []byte, err error) {
+	p := toGrayImage(m)
+	return webpEncodeLosslessGray(p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride)
 }
 
 func EncodeLosslessRGB(m image.Image) (data []byte, err error) {
@@ -78,8 +81,9 @@ func EncodeLosslessRGB(m image.Image) (data []byte, err error) {
 	return webpEncodeLosslessRGB(p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride)
 }
 
-func EncodeLosslessRGBA(m *image.RGBA) (data []byte, err error) {
-	return webpEncodeLosslessRGBA(m.Pix, m.Rect.Dx(), m.Rect.Dy(), m.Stride)
+func EncodeLosslessRGBA(m image.Image) (data []byte, err error) {
+	p := toRGBAImage(m)
+	return webpEncodeLosslessRGBA(p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride)
 }
 
 // GetMetadata return EXIF/ICCP/XMP format metadata.

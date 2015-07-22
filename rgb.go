@@ -11,167 +11,167 @@ import (
 )
 
 var (
-	_ Image = (*_RGB)(nil)
+	_ color.Color = (*RGBColor)(nil)
+	_ image.Image = (*RGBImage)(nil)
 )
 
-type _RGB struct {
-	M struct {
-		Pix    []uint8
-		Stride int
-		Rect   image.Rectangle
-	}
+var RGBModel color.Model = color.ModelFunc(rgbModel)
+
+type RGBColor struct {
+	R, G, B uint8
 }
 
-func (p *_RGB) Init(pix []uint8, stride int, rect image.Rectangle) *_RGB {
-	*p = _RGB{
-		M: struct {
-			Pix    []uint8
-			Stride int
-			Rect   image.Rectangle
-		}{
-			Pix:    p.M.Pix,
-			Stride: p.M.Stride,
-			Rect:   p.M.Rect,
-		},
-	}
-	return p
+func (c RGBColor) RGBA() (r, g, b, a uint32) {
+	r = uint32(c.R)
+	r |= r << 8
+	g = uint32(c.G)
+	g |= g << 8
+	b = uint32(c.B)
+	b |= b << 8
+	a = 0xffff
+	return
 }
 
-func (p *_RGB) BaseType() image.Image { return p }
-func (p *_RGB) Pix() []byte           { return p.M.Pix }
-func (p *_RGB) Stride() int           { return p.M.Stride }
-func (p *_RGB) Rect() image.Rectangle { return p.M.Rect }
-func (p *_RGB) Channels() int         { return 3 }
-func (p *_RGB) Depth() reflect.Kind   { return reflect.Uint8 }
-
-func (p *_RGB) ColorModel() color.Model { return color.RGBAModel }
-
-func (p *_RGB) Bounds() image.Rectangle { return p.M.Rect }
-
-func (p *_RGB) At(x, y int) color.Color {
-	c := p.RGBAt(x, y)
-	return color.RGBA{
-		R: c[0],
-		G: c[1],
-		B: c[2],
-		A: 0xFF,
+func rgbModel(c color.Color) color.Color {
+	if _, ok := c.(RGBColor); ok {
+		return c
 	}
+	r, g, b, _ := c.RGBA()
+	return RGBColor{R: uint8(r >> 8), G: uint8(g >> 8), B: uint8(b >> 8)}
 }
 
-func (p *_RGB) RGBAt(x, y int) [3]uint8 {
-	if !(image.Point{x, y}.In(p.M.Rect)) {
-		return [3]uint8{}
+type RGBImage struct {
+	Pix    []uint8
+	Stride int
+	Rect   image.Rectangle
+}
+
+func (p *RGBImage) ColorModel() color.Model { return color.RGBAModel }
+
+func (p *RGBImage) Bounds() image.Rectangle { return p.Rect }
+
+func (p *RGBImage) At(x, y int) color.Color {
+	return p.RGBAt(x, y)
+}
+
+func (p *RGBImage) RGBAt(x, y int) RGBColor {
+	if !(image.Point{x, y}.In(p.Rect)) {
+		return RGBColor{}
 	}
 	i := p.PixOffset(x, y)
-	return [3]uint8{
-		p.M.Pix[i+0],
-		p.M.Pix[i+1],
-		p.M.Pix[i+2],
+	return RGBColor{
+		R: p.Pix[i+0],
+		G: p.Pix[i+1],
+		B: p.Pix[i+2],
 	}
 }
 
 // PixOffset returns the index of the first element of Pix that corresponds to
 // the pixel at (x, y).
-func (p *_RGB) PixOffset(x, y int) int {
-	return (y-p.M.Rect.Min.Y)*p.M.Stride + (x-p.M.Rect.Min.X)*3
+func (p *RGBImage) PixOffset(x, y int) int {
+	return (y-p.Rect.Min.Y)*p.Stride + (x-p.Rect.Min.X)*3
 }
 
-func (p *_RGB) Set(x, y int, c color.Color) {
-	if !(image.Point{x, y}.In(p.M.Rect)) {
+func (p *RGBImage) Set(x, y int, c color.Color) {
+	if !(image.Point{x, y}.In(p.Rect)) {
 		return
 	}
 	i := p.PixOffset(x, y)
-	c1 := color.RGBAModel.Convert(c).(color.RGBA)
-	p.M.Pix[i+0] = c1.R
-	p.M.Pix[i+1] = c1.G
-	p.M.Pix[i+2] = c1.B
+	c1 := RGBModel.Convert(c).(RGBColor)
+	p.Pix[i+0] = c1.R
+	p.Pix[i+1] = c1.G
+	p.Pix[i+2] = c1.B
 	return
 }
 
-func (p *_RGB) SetRGB(x, y int, c [3]uint8) {
-	if !(image.Point{x, y}.In(p.M.Rect)) {
+func (p *RGBImage) SetRGB(x, y int, c RGBColor) {
+	if !(image.Point{x, y}.In(p.Rect)) {
 		return
 	}
 	i := p.PixOffset(x, y)
-	p.M.Pix[i+0] = c[0]
-	p.M.Pix[i+1] = c[1]
-	p.M.Pix[i+2] = c[2]
+	p.Pix[i+0] = c.R
+	p.Pix[i+1] = c.G
+	p.Pix[i+2] = c.B
 	return
 }
 
 // SubImage returns an image representing the portion of the image p visible
 // through r. The returned value shares pixels with the original image.
-func (p *_RGB) SubImage(r image.Rectangle) image.Image {
-	r = r.Intersect(p.M.Rect)
+func (p *RGBImage) SubImage(r image.Rectangle) image.Image {
+	r = r.Intersect(p.Rect)
 	// If r1 and r2 are Rectangles, r1.Intersect(r2) is not guaranteed to be inside
 	// either r1 or r2 if the intersection is empty. Without explicitly checking for
 	// this, the Pix[i:] expression below can panic.
 	if r.Empty() {
-		return &_RGB{}
+		return &RGBImage{}
 	}
 	i := p.PixOffset(r.Min.X, r.Min.Y)
-	return &_RGB{
-		M: struct {
-			Pix    []uint8
-			Stride int
-			Rect   image.Rectangle
-		}{
-			Pix:    p.M.Pix[i:],
-			Stride: p.M.Stride,
-			Rect:   r,
-		},
+	return &RGBImage{
+		Pix:    p.Pix[i:],
+		Stride: p.Stride,
+		Rect:   r,
 	}
 }
 
 // Opaque scans the entire image and reports whether it is fully opaque.
-func (p *_RGB) Opaque() bool {
+func (p *RGBImage) Opaque() bool {
 	return true
 }
 
-// newRGB returns a new _RGB with the given bounds.
-func newRGB(r image.Rectangle) *_RGB {
-	w, h := r.Dx(), r.Dy()
-	pix := make([]uint8, 3*w*h)
-	return &_RGB{
-		M: struct {
-			Pix    []uint8
-			Stride int
-			Rect   image.Rectangle
-		}{
-			Pix:    pix,
-			Stride: 3 * w,
-			Rect:   r,
-		},
+// MemPImage return a MemP typed image.
+//
+// MemP Image Spec (Native Endian), see https://github.com/chai2010/image.
+func (p *RGBImage) MemPImage() interface{} {
+	type mempImage struct {
+		MemPMagic string // MemP
+		Rect      image.Rectangle
+		Channels  int
+		DataType  reflect.Kind
+		Pix       []byte
+
+		// Stride is the Pix stride (in bytes, must align with SizeofKind(p.DataType))
+		// between vertically adjacent pixels.
+		Stride int
+	}
+
+	return &mempImage{
+		MemPMagic: "MemP",
+		Rect:      p.Rect,
+		Channels:  3,
+		DataType:  reflect.Uint8,
+		Pix:       p.Pix,
+		Stride:    p.Stride,
 	}
 }
 
-func newRGBFromImage(m image.Image) *_RGB {
-	if m, ok := m.(*_RGB); ok {
+// MemP Image Spec (Native Endian), see https://github.com/chai2010/image.
+
+// NewRGBImage returns a new RGBImage with the given bounds.
+func NewRGBImage(r image.Rectangle) *RGBImage {
+	w, h := r.Dx(), r.Dy()
+	pix := make([]uint8, 3*w*h)
+	return &RGBImage{
+		Pix:    pix,
+		Stride: 3 * w,
+		Rect:   r,
+	}
+}
+
+func NewRGBImageFrom(m image.Image) *RGBImage {
+	if m, ok := m.(*RGBImage); ok {
 		return m
 	}
 
-	// try `Image` interface
-	if x, ok := m.(Image); ok {
-		// try original type
-		if m, ok := x.BaseType().(*_RGB); ok {
-			return m
-		}
-		// create new image with `x.Pix()`
-		if x.Channels() == 3 && x.Depth() == reflect.Uint8 {
-			return new(_RGB).Init(x.Pix(), x.Stride(), x.Rect())
-		}
-	}
-
-	// convert to _RGB
+	// convert to RGBImage
 	b := m.Bounds()
-	rgb := newRGB(b)
+	rgb := NewRGBImage(b)
 	for y := b.Min.Y; y < b.Max.Y; y++ {
 		for x := b.Min.X; x < b.Max.X; x++ {
 			pr, pg, pb, _ := m.At(x, y).RGBA()
-			rgb.SetRGB(x, y, [3]uint8{
-				uint8(pr >> 8),
-				uint8(pg >> 8),
-				uint8(pb >> 8),
+			rgb.SetRGB(x, y, RGBColor{
+				R: uint8(pr >> 8),
+				G: uint8(pg >> 8),
+				B: uint8(pb >> 8),
 			})
 		}
 	}

@@ -94,23 +94,6 @@ Decode and Encode as RGB format:
 		log.Fatal(err)
 	}
 
-Use `m.Pix` form `webp.Image` interface:
-
-	m, _ := webp.DecodeRGB(data)
-	rgb := m.(webp.Image)
-	b := rgb.Bounds()
-
-	for y := b.Min.Y; y < b.Max.Y; y++ {
-		off := (y-b.Min.Y)*rgb.Stride()
-		pix := rgb.Pix()[off:][:rgb.Stride()]
-		for i := 0; i < len(pix); i += 3 {
-			R := pix[i+0]
-			G := pix[i+1]
-			B := pix[i+2]
-			...
-		}
-	}
-
 BUGS
 
 Report bugs to <chaishushan@gmail.com>.

@@ -7,7 +7,6 @@ package webp
 import (
 	"image"
 	"image/color"
-	"reflect"
 )
 
 var (
@@ -117,34 +116,6 @@ func (p *RGBImage) SubImage(r image.Rectangle) image.Image {
 func (p *RGBImage) Opaque() bool {
 	return true
 }
-
-// MemPImage return a MemP typed image.
-//
-// MemP Image Spec (Native Endian), see https://github.com/chai2010/image.
-func (p *RGBImage) MemPImage() interface{} {
-	type mempImage struct {
-		MemPMagic string // MemP
-		Rect      image.Rectangle
-		Channels  int
-		DataType  reflect.Kind
-		Pix       []byte
-
-		// Stride is the Pix stride (in bytes, must align with SizeofKind(p.DataType))
-		// between vertically adjacent pixels.
-		Stride int
-	}
-
-	return &mempImage{
-		MemPMagic: "MemP",
-		Rect:      p.Rect,
-		Channels:  3,
-		DataType:  reflect.Uint8,
-		Pix:       p.Pix,
-		Stride:    p.Stride,
-	}
-}
-
-// MemP Image Spec (Native Endian), see https://github.com/chai2010/image.
 
 // NewRGBImage returns a new RGBImage with the given bounds.
 func NewRGBImage(r image.Rectangle) *RGBImage {

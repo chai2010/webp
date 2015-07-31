@@ -11,7 +11,26 @@ import (
 	"image/color"
 	"io"
 	"io/ioutil"
+	"os"
 )
+
+func LoadConfig(name string) (config image.Config, err error) {
+	f, err := os.Open(name)
+	if err != nil {
+		return image.Config{}, err
+	}
+	defer f.Close()
+	return DecodeConfig(f)
+}
+
+func Load(name string) (m image.Image, err error) {
+	f, err := os.Open(name)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	return Decode(f)
+}
 
 // DecodeConfig returns the color model and dimensions of a WEBP image without
 // decoding the entire image.

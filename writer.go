@@ -10,6 +10,7 @@ import (
 	"image"
 	"image/color"
 	"io"
+	"os"
 )
 
 const DefaulQuality = 90
@@ -22,6 +23,15 @@ type Options struct {
 
 type colorModeler interface {
 	ColorModel() color.Model
+}
+
+func Save(name string, m image.Image, opt *Options) (err error) {
+	f, err := os.Create(name)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	return Encode(f, m, opt)
 }
 
 // Encode writes the image m to w in WEBP format.

@@ -36,9 +36,9 @@ func DecodeRGB(data []byte) (m *RGBImage, err error) {
 		return
 	}
 	m = &RGBImage{
-		Pix:    pix,
-		Stride: 3 * w,
-		Rect:   image.Rect(0, 0, w, h),
+		XPix:    pix,
+		XStride: 3 * w,
+		XRect:   image.Rect(0, 0, w, h),
 	}
 	return
 }
@@ -63,7 +63,7 @@ func EncodeGray(m image.Image, quality float32) (data []byte, err error) {
 
 func EncodeRGB(m image.Image, quality float32) (data []byte, err error) {
 	p := NewRGBImageFrom(m)
-	return webpEncodeRGB(p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride, quality)
+	return webpEncodeRGB(p.XPix, p.XRect.Dx(), p.XRect.Dy(), p.XStride, quality)
 }
 
 func EncodeRGBA(m image.Image, quality float32) (data []byte, err error) {
@@ -78,7 +78,7 @@ func EncodeLosslessGray(m image.Image) (data []byte, err error) {
 
 func EncodeLosslessRGB(m image.Image) (data []byte, err error) {
 	p := NewRGBImageFrom(m)
-	return webpEncodeLosslessRGB(p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride)
+	return webpEncodeLosslessRGB(p.XPix, p.XRect.Dx(), p.XRect.Dy(), p.XStride)
 }
 
 func EncodeLosslessRGBA(m image.Image) (data []byte, err error) {

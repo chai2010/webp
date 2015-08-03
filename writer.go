@@ -11,6 +11,7 @@ import (
 	"image/color"
 	"io"
 	"os"
+	"reflect"
 )
 
 const DefaulQuality = 90
@@ -81,11 +82,53 @@ func Encode(w io.Writer, m image.Image, opt *Options) (err error) {
 }
 
 func adjustImage(m image.Image) image.Image {
+	if p, ok := AsMemPImage(m); ok {
+		switch {
+		case p.XChannels == 1 && p.XDataType == reflect.Uint8:
+			m = &image.Gray{
+				Pix:    p.XPix,
+				Stride: p.XStride,
+				Rect:   p.XRect,
+			}
+		case p.XChannels == 1 && p.XDataType == reflect.Uint16:
+			m = &image.Gray16{
+				Pix:    p.XPix,
+				Stride: p.XStride,
+				Rect:   p.XRect,
+			}
+		case p.XChannels == 3 && p.XDataType == reflect.Uint8:
+			m = &RGBImage{
+				XPix:    p.XPix,
+				XStride: p.XStride,
+				XRect:   p.XRect,
+			}
+		case p.XChannels == 3 && p.XDataType == reflect.Uint16:
+			m = &RGB48Image{
+				XPix:    p.XPix,
+				XStride: p.XStride,
+				XRect:   p.XRect,
+			}
+		case p.XChannels == 4 && p.XDataType == reflect.Uint8:
+			m = &image.RGBA{
+				Pix:    p.XPix,
+				Stride: p.XStride,
+				Rect:   p.XRect,
+			}
+		case p.XChannels == 4 && p.XDataType == reflect.Uint16:
+			m = &image.RGBA64{
+				Pix:    p.XPix,
+				Stride: p.XStride,
+				Rect:   p.XRect,
+			}
+		}
+	}
 	switch m := m.(type) {
 	case *image.Gray:
 		return m
 	case *RGBImage:
 		return m
+	case *RGB48Image:
+		return NewRGBImageFrom(m)
 	case *image.RGBA:
 		return m
 	case *image.YCbCr:

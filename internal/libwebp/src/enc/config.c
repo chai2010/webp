@@ -27,7 +27,7 @@ int WebPConfigInitInternal(WebPConfig* config,
   config->quality = quality;
   config->target_size = 0;
   config->target_PSNR = 0.;
-  config->method = 4;
+  config->method = 0; // 4;
   config->sns_strength = 50;
   config->filter_strength = 60;   // mid-filtering
   config->filter_sharpness = 0;

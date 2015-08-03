@@ -91,11 +91,7 @@ func adjustImage(m image.Image) image.Image {
 				Rect:   p.XRect,
 			}
 		case p.XChannels == 1 && p.XDataType == reflect.Uint16:
-			m = &image.Gray16{
-				Pix:    p.XPix,
-				Stride: p.XStride,
-				Rect:   p.XRect,
-			}
+			m = toGrayImage(m) // MemP is little endian
 		case p.XChannels == 3 && p.XDataType == reflect.Uint8:
 			m = &RGBImage{
 				XPix:    p.XPix,
@@ -103,11 +99,7 @@ func adjustImage(m image.Image) image.Image {
 				XRect:   p.XRect,
 			}
 		case p.XChannels == 3 && p.XDataType == reflect.Uint16:
-			m = &RGB48Image{
-				XPix:    p.XPix,
-				XStride: p.XStride,
-				XRect:   p.XRect,
-			}
+			m = NewRGBImageFrom(m) // MemP is little endian
 		case p.XChannels == 4 && p.XDataType == reflect.Uint8:
 			m = &image.RGBA{
 				Pix:    p.XPix,
@@ -115,11 +107,7 @@ func adjustImage(m image.Image) image.Image {
 				Rect:   p.XRect,
 			}
 		case p.XChannels == 4 && p.XDataType == reflect.Uint16:
-			m = &image.RGBA64{
-				Pix:    p.XPix,
-				Stride: p.XStride,
-				Rect:   p.XRect,
-			}
+			m = toRGBAImage(m) // MemP is little endian
 		}
 	}
 	switch m := m.(type) {

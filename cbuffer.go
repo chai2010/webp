@@ -81,14 +81,16 @@ func (p *cBuffer) CData() []byte {
 }
 
 func (p *cBuffer) Own(d []byte) bool {
-	if cap(d) == 0 {
+	if cap(d) == 0 || p.cptr == nil {
 		return false
 	}
+	min := uintptr(p.cptr)
+	max := uintptr(p.cptr) + uintptr(len(p.data)-1)
 	hdr := (*reflect.SliceHeader)(unsafe.Pointer(&d))
-	if a, b := hdr.Data, uintptr(p.cptr); a < b || a >= b {
+	if x := hdr.Data; x < min || x > max {
 		return false
 	}
-	if a, b := hdr.Data+uintptr(hdr.Cap), uintptr(p.cptr); a < b || a >= b {
+	if x := hdr.Data + uintptr(hdr.Cap-1); x < min || x > max {
 		return false
 	}
 	return true

@@ -37,8 +37,8 @@ func (p *RGBImage) DataType() reflect.Kind {
 	return reflect.Uint8
 }
 
-func (p *RGBImage) Pix() (pix []byte, isCBuf bool) {
-	return p.XPix, false
+func (p *RGBImage) Pix() []byte {
+	return p.XPix
 }
 
 func (p *RGBImage) Stride() int {

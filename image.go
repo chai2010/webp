@@ -34,7 +34,7 @@ type MemP interface {
 	Bounds() image.Rectangle
 	Channels() int
 	DataType() reflect.Kind
-	Pix() (pix []byte, isCBuf bool) // pix is PixSilce type
+	Pix() []byte // PixSilce type
 
 	// Stride is the Pix stride (in bytes, must align with SizeofKind(p.DataType))
 	// between vertically adjacent pixels.
@@ -47,7 +47,6 @@ type MemPImage struct {
 	XChannels  int
 	XDataType  reflect.Kind
 	XPix       PixSilce
-	XPixIsCBuf bool
 	XStride    int
 }
 
@@ -63,19 +62,18 @@ func NewMemPImage(r image.Rectangle, channels int, dataType reflect.Kind) *MemPI
 	return m
 }
 
+// m is MemP or image.Image
 func AsMemPImage(m interface{}) (p *MemPImage, ok bool) {
 	if m, ok := m.(*MemPImage); ok {
 		return m, true
 	}
 	if m, ok := m.(MemP); ok {
-		pix, isCBuf := m.Pix()
 		return &MemPImage{
 			XMemPMagic: MemPMagic,
 			XRect:      m.Bounds(),
 			XChannels:  m.Channels(),
 			XDataType:  m.DataType(),
-			XPix:       pix,
-			XPixIsCBuf: isCBuf,
+			XPix:       m.Pix(),
 			XStride:    m.Stride(),
 		}, true
 	}
@@ -230,8 +228,8 @@ func (p *MemPImage) DataType() reflect.Kind {
 	return p.XDataType
 }
 
-func (p *MemPImage) Pix() (pix []byte, isCBuf bool) {
-	return p.XPix, p.XPixIsCBuf
+func (p *MemPImage) Pix() []byte {
+	return p.XPix
 }
 
 func (p *MemPImage) Stride() int {
@@ -300,12 +298,11 @@ func (p *MemPImage) SubImage(r image.Rectangle) image.Image {
 	}
 	i := p.PixOffset(r.Min.X, r.Min.Y)
 	return &MemPImage{
-		XPix:       p.XPix[i:],
-		XPixIsCBuf: p.XPixIsCBuf,
-		XStride:    p.XStride,
-		XRect:      r,
-		XChannels:  p.XChannels,
-		XDataType:  p.XDataType,
+		XRect:     r,
+		XChannels: p.XChannels,
+		XDataType: p.XDataType,
+		XPix:      p.XPix[i:],
+		XStride:   p.XStride,
 	}
 }
 

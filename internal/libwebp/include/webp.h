@@ -69,6 +69,7 @@ uint8_t* webpDelEXIF(const uint8_t* data, size_t data_size, size_t* new_data_siz
 uint8_t* webpDelICCP(const uint8_t* data, size_t data_size, size_t* new_data_size);
 uint8_t* webpDelXMP(const uint8_t* data, size_t data_size, size_t* new_data_size);
 
+void* webpMalloc(size_t size);
 void webpFree(void* p);
 
 #ifdef __cplusplus

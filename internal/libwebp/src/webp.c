@@ -316,6 +316,10 @@ uint8_t* webpDelXMP(const uint8_t* data, size_t data_size, size_t* new_data_size
 	return (uint8_t*)(output_data.bytes);
 }
 
+void* webpMalloc(size_t size) {
+	return malloc(size);
+}
+
 void webpFree(void* p) {
 	free(p);
 }

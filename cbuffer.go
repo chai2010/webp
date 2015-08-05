@@ -4,7 +4,7 @@
 
 package webp
 
-//#include <stdlib.h>
+//#include "webp.h"
 import "C"
 import (
 	"errors"
@@ -35,7 +35,7 @@ type cBuffer struct {
 func NewCBuffer(size int, dontResize ...bool) CBuffer {
 	p := new(cBuffer)
 	if size > 0 {
-		p.cptr = C.malloc(C.size_t(size))
+		p.cptr = C.webpMalloc(C.size_t(size))
 		p.data = (*[1 << 30]byte)(p.cptr)[0:size:size]
 	}
 	if len(dontResize) > 0 {
@@ -50,7 +50,7 @@ func (p *cBuffer) CBufMagic() string {
 
 func (p *cBuffer) Close() error {
 	if p.cptr != nil {
-		C.free(p.cptr)
+		C.webpFree(p.cptr)
 	}
 	p.cptr = nil
 	p.data = nil
@@ -70,7 +70,7 @@ func (p *cBuffer) Resize(size int) error {
 	}
 	p.Close()
 	if size > 0 {
-		p.cptr = C.malloc(C.size_t(size))
+		p.cptr = C.webpMalloc(C.size_t(size))
 		p.data = (*[1 << 30]byte)(p.cptr)[0:size:size]
 	}
 	return nil

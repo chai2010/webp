@@ -62,7 +62,7 @@ func (p *cBuffer) CanResize() bool {
 }
 
 func (p *cBuffer) Resize(size int) error {
-	if size <= 0 {
+	if size < 0 {
 		return errors.New("webp: cBuffer.Resize, bad size!")
 	}
 	if p.dontResize {

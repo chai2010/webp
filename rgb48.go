@@ -16,7 +16,7 @@ var (
 )
 
 type RGB48Image struct {
-	XPix    []uint8
+	XPix    []uint8 // XPix use Native Endian (same as MemP) !!!
 	XStride int
 	XRect   image.Rectangle
 }
@@ -52,11 +52,20 @@ func (p *RGB48Image) At(x, y int) color.Color {
 		return color.RGBA64{}
 	}
 	i := p.PixOffset(x, y)
-	return color.RGBA64{
-		R: uint16(p.XPix[i+0])<<8 | uint16(p.XPix[i+1]),
-		G: uint16(p.XPix[i+2])<<8 | uint16(p.XPix[i+3]),
-		B: uint16(p.XPix[i+4])<<8 | uint16(p.XPix[i+5]),
-		A: 0xffff,
+	if isLittleEndian {
+		return color.RGBA64{
+			R: uint16(p.XPix[i+1])<<8 | uint16(p.XPix[i+0]),
+			G: uint16(p.XPix[i+3])<<8 | uint16(p.XPix[i+2]),
+			B: uint16(p.XPix[i+4])<<8 | uint16(p.XPix[i+4]),
+			A: 0xffff,
+		}
+	} else {
+		return color.RGBA64{
+			R: uint16(p.XPix[i+0])<<8 | uint16(p.XPix[i+1]),
+			G: uint16(p.XPix[i+2])<<8 | uint16(p.XPix[i+3]),
+			B: uint16(p.XPix[i+4])<<8 | uint16(p.XPix[i+5]),
+			A: 0xffff,
+		}
 	}
 }
 
@@ -65,10 +74,18 @@ func (p *RGB48Image) RGB48At(x, y int) [3]uint16 {
 		return [3]uint16{}
 	}
 	i := p.PixOffset(x, y)
-	return [3]uint16{
-		uint16(p.XPix[i+0])<<8 | uint16(p.XPix[i+1]),
-		uint16(p.XPix[i+2])<<8 | uint16(p.XPix[i+3]),
-		uint16(p.XPix[i+4])<<8 | uint16(p.XPix[i+5]),
+	if isLittleEndian {
+		return [3]uint16{
+			uint16(p.XPix[i+1])<<8 | uint16(p.XPix[i+0]),
+			uint16(p.XPix[i+3])<<8 | uint16(p.XPix[i+2]),
+			uint16(p.XPix[i+5])<<8 | uint16(p.XPix[i+4]),
+		}
+	} else {
+		return [3]uint16{
+			uint16(p.XPix[i+0])<<8 | uint16(p.XPix[i+1]),
+			uint16(p.XPix[i+2])<<8 | uint16(p.XPix[i+3]),
+			uint16(p.XPix[i+4])<<8 | uint16(p.XPix[i+5]),
+		}
 	}
 }
 
@@ -84,12 +101,21 @@ func (p *RGB48Image) Set(x, y int, c color.Color) {
 	}
 	i := p.PixOffset(x, y)
 	c1 := color.RGBA64Model.Convert(c).(color.RGBA64)
-	p.XPix[i+0] = uint8(c1.R >> 8)
-	p.XPix[i+1] = uint8(c1.R)
-	p.XPix[i+2] = uint8(c1.G >> 8)
-	p.XPix[i+3] = uint8(c1.G)
-	p.XPix[i+4] = uint8(c1.B >> 8)
-	p.XPix[i+5] = uint8(c1.B)
+	if isLittleEndian {
+		p.XPix[i+1] = uint8(c1.R >> 8)
+		p.XPix[i+0] = uint8(c1.R)
+		p.XPix[i+3] = uint8(c1.G >> 8)
+		p.XPix[i+2] = uint8(c1.G)
+		p.XPix[i+5] = uint8(c1.B >> 8)
+		p.XPix[i+4] = uint8(c1.B)
+	} else {
+		p.XPix[i+0] = uint8(c1.R >> 8)
+		p.XPix[i+1] = uint8(c1.R)
+		p.XPix[i+2] = uint8(c1.G >> 8)
+		p.XPix[i+3] = uint8(c1.G)
+		p.XPix[i+4] = uint8(c1.B >> 8)
+		p.XPix[i+5] = uint8(c1.B)
+	}
 	return
 }
 
@@ -98,12 +124,21 @@ func (p *RGB48Image) SetRGB48(x, y int, c [3]uint16) {
 		return
 	}
 	i := p.PixOffset(x, y)
-	p.XPix[i+0] = uint8(c[0] >> 8)
-	p.XPix[i+1] = uint8(c[0])
-	p.XPix[i+2] = uint8(c[1] >> 8)
-	p.XPix[i+3] = uint8(c[1])
-	p.XPix[i+4] = uint8(c[2] >> 8)
-	p.XPix[i+5] = uint8(c[2])
+	if isLittleEndian {
+		p.XPix[i+1] = uint8(c[0] >> 8)
+		p.XPix[i+0] = uint8(c[0])
+		p.XPix[i+3] = uint8(c[1] >> 8)
+		p.XPix[i+2] = uint8(c[1])
+		p.XPix[i+5] = uint8(c[2] >> 8)
+		p.XPix[i+4] = uint8(c[2])
+	} else {
+		p.XPix[i+0] = uint8(c[0] >> 8)
+		p.XPix[i+1] = uint8(c[0])
+		p.XPix[i+2] = uint8(c[1] >> 8)
+		p.XPix[i+3] = uint8(c[1])
+		p.XPix[i+4] = uint8(c[2] >> 8)
+		p.XPix[i+5] = uint8(c[2])
+	}
 	return
 }
 

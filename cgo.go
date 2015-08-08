@@ -13,11 +13,11 @@ import "unsafe"
 // Go1.3: Changes to the garbage collector
 // http://golang.org/doc/go1.3#garbage_collector
 
-func cgoSafePtr(data []byte) unsafe.Pointer {
+func cgoSafePtr(data []byte, isCBuf bool) unsafe.Pointer {
 	if len(data) == 0 {
 		return nil
 	}
-	if cgoIsUnsafePtr {
+	if !isCBuf && cgoIsUnsafePtr {
 		p := C.malloc(C.size_t(len(data)))
 		copy(((*[1 << 30]byte)(p))[0:len(data):len(data)], data)
 		return p
@@ -27,8 +27,8 @@ func cgoSafePtr(data []byte) unsafe.Pointer {
 	}
 }
 
-func cgoFreePtr(p unsafe.Pointer) {
-	if cgoIsUnsafePtr && p != nil {
+func cgoFreePtr(p unsafe.Pointer, isCBuf bool) {
+	if !isCBuf && cgoIsUnsafePtr && p != nil {
 		C.free(p)
 	}
 }

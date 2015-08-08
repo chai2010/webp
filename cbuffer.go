@@ -32,6 +32,18 @@ type cBuffer struct {
 	data       []byte
 }
 
+func newCBufferFrom(cptr unsafe.Pointer, size int, dontResize ...bool) CBuffer {
+	p := new(cBuffer)
+	if cptr != nil && size > 0 {
+		p.cptr = cptr
+		p.data = (*[1 << 30]byte)(p.cptr)[0:size:size]
+	}
+	if len(dontResize) > 0 {
+		p.dontResize = dontResize[0]
+	}
+	return p
+}
+
 func NewCBuffer(size int, dontResize ...bool) CBuffer {
 	p := new(cBuffer)
 	if size > 0 {

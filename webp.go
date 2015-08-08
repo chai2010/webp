@@ -13,17 +13,22 @@ const (
 	maxWebpHeaderSize = 32
 )
 
+var (
+	nilCBuffer = NewCBuffer(0)
+)
+
 func GetInfo(data []byte) (width, height int, hasAlpha bool, err error) {
-	return webpGetInfo(data)
+	return webpGetInfo(data, nilCBuffer)
 }
 
 func DecodeGray(data []byte) (m *image.Gray, err error) {
-	pix, w, h, err := webpDecodeGray(data)
+	pix, w, h, err := webpDecodeGray(data, nilCBuffer)
 	if err != nil {
 		return
 	}
+	defer pix.Close()
 	m = &image.Gray{
-		Pix:    pix,
+		Pix:    append([]byte{}, pix.CData()...),
 		Stride: 1 * w,
 		Rect:   image.Rect(0, 0, w, h),
 	}
@@ -31,12 +36,13 @@ func DecodeGray(data []byte) (m *image.Gray, err error) {
 }
 
 func DecodeRGB(data []byte) (m *RGBImage, err error) {
-	pix, w, h, err := webpDecodeRGB(data)
+	pix, w, h, err := webpDecodeRGB(data, nilCBuffer)
 	if err != nil {
 		return
 	}
+	defer pix.Close()
 	m = &RGBImage{
-		XPix:    pix,
+		XPix:    append([]byte{}, pix.CData()...),
 		XStride: 3 * w,
 		XRect:   image.Rect(0, 0, w, h),
 	}
@@ -44,12 +50,13 @@ func DecodeRGB(data []byte) (m *RGBImage, err error) {
 }
 
 func DecodeRGBA(data []byte) (m *image.RGBA, err error) {
-	pix, w, h, err := webpDecodeRGBA(data)
+	pix, w, h, err := webpDecodeRGBA(data, nilCBuffer)
 	if err != nil {
 		return
 	}
+	defer pix.Close()
 	m = &image.RGBA{
-		Pix:    pix,
+		Pix:    append([]byte{}, pix.CData()...),
 		Stride: 4 * w,
 		Rect:   image.Rect(0, 0, w, h),
 	}
@@ -58,32 +65,68 @@ func DecodeRGBA(data []byte) (m *image.RGBA, err error) {
 
 func EncodeGray(m image.Image, quality float32) (data []byte, err error) {
 	p := toGrayImage(m)
-	return webpEncodeGray(p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride, quality)
+	cbuf, err := webpEncodeGray(p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride, quality, nilCBuffer)
+	if err != nil {
+		return
+	}
+	data = append([]byte{}, cbuf.CData()...)
+	cbuf.Close()
+	return
 }
 
 func EncodeRGB(m image.Image, quality float32) (data []byte, err error) {
 	p := NewRGBImageFrom(m)
-	return webpEncodeRGB(p.XPix, p.XRect.Dx(), p.XRect.Dy(), p.XStride, quality)
+	cbuf, err := webpEncodeRGB(p.XPix, p.XRect.Dx(), p.XRect.Dy(), p.XStride, quality, nilCBuffer)
+	if err != nil {
+		return
+	}
+	data = append([]byte{}, cbuf.CData()...)
+	cbuf.Close()
+	return
 }
 
 func EncodeRGBA(m image.Image, quality float32) (data []byte, err error) {
 	p := toRGBAImage(m)
-	return webpEncodeRGBA(p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride, quality)
+	cbuf, err := webpEncodeRGBA(p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride, quality, nilCBuffer)
+	if err != nil {
+		return
+	}
+	data = append([]byte{}, cbuf.CData()...)
+	cbuf.Close()
+	return
 }
 
 func EncodeLosslessGray(m image.Image) (data []byte, err error) {
 	p := toGrayImage(m)
-	return webpEncodeLosslessGray(p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride)
+	cbuf, err := webpEncodeLosslessGray(p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride, nilCBuffer)
+	if err != nil {
+		return
+	}
+	data = append([]byte{}, cbuf.CData()...)
+	cbuf.Close()
+	return
 }
 
 func EncodeLosslessRGB(m image.Image) (data []byte, err error) {
 	p := NewRGBImageFrom(m)
-	return webpEncodeLosslessRGB(p.XPix, p.XRect.Dx(), p.XRect.Dy(), p.XStride)
+	cbuf, err := webpEncodeLosslessRGB(p.XPix, p.XRect.Dx(), p.XRect.Dy(), p.XStride, nilCBuffer)
+	if err != nil {
+		return
+	}
+	data = append([]byte{}, cbuf.CData()...)
+	cbuf.Close()
+	return
 }
 
 func EncodeLosslessRGBA(m image.Image) (data []byte, err error) {
 	p := toRGBAImage(m)
-	return webpEncodeLosslessRGBA(p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride)
+	cbuf, err := webpEncodeLosslessRGBA(p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride, nilCBuffer)
+	if err != nil {
+		return
+	}
+	data = append([]byte{}, cbuf.CData()...)
+	cbuf.Close()
+	return
 }
 
 // GetMetadata return EXIF/ICCP/XMP format metadata.

@@ -228,7 +228,7 @@ import (
 	"unsafe"
 )
 
-func webpGetInfo(data []byte) (width, height int, has_alpha bool, err error) {
+func webpGetInfo(data []byte, cbuf CBuffer) (width, height int, hasAlpha bool, err error) {
 	if len(data) == 0 {
 		err = errors.New("webpGetInfo: bad arguments")
 		return
@@ -236,8 +236,9 @@ func webpGetInfo(data []byte) (width, height int, has_alpha bool, err error) {
 	if len(data) > maxWebpHeaderSize {
 		data = data[:maxWebpHeaderSize]
 	}
-	cData := cgoSafePtr(data)
-	defer cgoFreePtr(cData)
+	isCBuf := cbuf.Own(data)
+	cData := cgoSafePtr(data, isCBuf)
+	defer cgoFreePtr(cData, isCBuf)
 
 	rv := C.cgoWebpGetInfo((*C.uint8_t)(cData), C.size_t(len(data)))
 	if rv.ok != 1 {
@@ -245,17 +246,18 @@ func webpGetInfo(data []byte) (width, height int, has_alpha bool, err error) {
 		return
 	}
 	width, height = int(rv.width), int(rv.height)
-	has_alpha = (rv.has_alpha != 0)
+	hasAlpha = (rv.has_alpha != 0)
 	return
 }
 
-func webpDecodeGray(data []byte) (pix []byte, width, height int, err error) {
+func webpDecodeGray(data []byte, cbuf CBuffer) (pix CBuffer, width, height int, err error) {
 	if len(data) == 0 {
 		err = errors.New("webpDecodeGray: bad arguments")
 		return
 	}
-	cData := cgoSafePtr(data)
-	defer cgoFreePtr(cData)
+	isCBuf := cbuf.Own(data)
+	cData := cgoSafePtr(data, isCBuf)
+	defer cgoFreePtr(cData, isCBuf)
 
 	rv := C.cgoWebpDecodeGray((*C.uint8_t)(cData), C.size_t(len(data)))
 	if rv.ok != 1 {
@@ -264,19 +266,18 @@ func webpDecodeGray(data []byte) (pix []byte, width, height int, err error) {
 	}
 
 	width, height = int(rv.width), int(rv.height)
-	pix = make([]byte, width*height*1)
-	copy(pix, ((*[1 << 30]byte)(unsafe.Pointer(rv.ptr)))[0:len(pix):len(pix)])
-	C.webpFree(unsafe.Pointer(rv.ptr))
+	pix = newCBufferFrom(unsafe.Pointer(rv.ptr), width*height*1)
 	return
 }
 
-func webpDecodeRGB(data []byte) (pix []byte, width, height int, err error) {
+func webpDecodeRGB(data []byte, cbuf CBuffer) (pix CBuffer, width, height int, err error) {
 	if len(data) == 0 {
 		err = errors.New("webpDecodeRGB: bad arguments")
 		return
 	}
-	cData := cgoSafePtr(data)
-	defer cgoFreePtr(cData)
+	isCBuf := cbuf.Own(data)
+	cData := cgoSafePtr(data, isCBuf)
+	defer cgoFreePtr(cData, isCBuf)
 
 	rv := C.cgoWebpDecodeRGB((*C.uint8_t)(cData), C.size_t(len(data)))
 	if rv.ok != 1 {
@@ -285,19 +286,18 @@ func webpDecodeRGB(data []byte) (pix []byte, width, height int, err error) {
 	}
 
 	width, height = int(rv.width), int(rv.height)
-	pix = make([]byte, width*height*3)
-	copy(pix, ((*[1 << 30]byte)(unsafe.Pointer(rv.ptr)))[0:len(pix):len(pix)])
-	C.webpFree(unsafe.Pointer(rv.ptr))
+	pix = newCBufferFrom(unsafe.Pointer(rv.ptr), width*height*3)
 	return
 }
 
-func webpDecodeRGBA(data []byte) (pix []byte, width, height int, err error) {
+func webpDecodeRGBA(data []byte, cbuf CBuffer) (pix CBuffer, width, height int, err error) {
 	if len(data) == 0 {
 		err = errors.New("webpDecodeRGBA: bad arguments")
 		return
 	}
-	cData := cgoSafePtr(data)
-	defer cgoFreePtr(cData)
+	isCBuf := cbuf.Own(data)
+	cData := cgoSafePtr(data, isCBuf)
+	defer cgoFreePtr(cData, isCBuf)
 
 	rv := C.cgoWebpDecodeRGBA((*C.uint8_t)(cData), C.size_t(len(data)))
 	if rv.ok != 1 {
@@ -306,17 +306,12 @@ func webpDecodeRGBA(data []byte) (pix []byte, width, height int, err error) {
 	}
 
 	width, height = int(rv.width), int(rv.height)
-	pix = make([]byte, width*height*4)
-	copy(pix, ((*[1 << 30]byte)(unsafe.Pointer(rv.ptr)))[0:len(pix):len(pix)])
-	C.webpFree(unsafe.Pointer(rv.ptr))
+	pix = newCBufferFrom(unsafe.Pointer(rv.ptr), width*height*4)
 	return
 }
 
-func webpEncodeGray(
-	pix []byte, width, height, stride int,
-	quality_factor float32,
-) (output []byte, err error) {
-	if len(pix) == 0 || width <= 0 || height <= 0 || stride <= 0 || quality_factor < 0.0 {
+func webpEncodeGray(pix []byte, width, height, stride int, quality float32, cbuf CBuffer) (output CBuffer, err error) {
+	if len(pix) == 0 || width <= 0 || height <= 0 || stride <= 0 || quality < 0.0 {
 		err = errors.New("webpEncodeGray: bad arguments")
 		return
 	}
@@ -324,29 +319,25 @@ func webpEncodeGray(
 		err = errors.New("webpEncodeGray: bad arguments")
 		return
 	}
-	cPix := cgoSafePtr(pix)
-	defer cgoFreePtr(cPix)
+	isCBuf := cbuf.Own(pix)
+	cPix := cgoSafePtr(pix, isCBuf)
+	defer cgoFreePtr(cPix, isCBuf)
 
 	rv := C.cgoWebpEncodeGray(
 		(*C.uint8_t)(cPix), C.int(width), C.int(height),
-		C.int(stride), C.float(quality_factor),
+		C.int(stride), C.float(quality),
 	)
 	if rv.ok != 1 {
 		err = errors.New("webpEncodeGray: failed")
 		return
 	}
 
-	output = make([]byte, int(rv.size))
-	copy(output, ((*[1 << 30]byte)(unsafe.Pointer(rv.ptr)))[0:len(output):len(output)])
-	C.webpFree(unsafe.Pointer(rv.ptr))
+	output = newCBufferFrom(unsafe.Pointer(rv.ptr), int(rv.size))
 	return
 }
 
-func webpEncodeRGB(
-	pix []byte, width, height, stride int,
-	quality_factor float32,
-) (output []byte, err error) {
-	if len(pix) == 0 || width <= 0 || height <= 0 || stride <= 0 || quality_factor < 0.0 {
+func webpEncodeRGB(pix []byte, width, height, stride int, quality float32, cbuf CBuffer) (output CBuffer, err error) {
+	if len(pix) == 0 || width <= 0 || height <= 0 || stride <= 0 || quality < 0.0 {
 		err = errors.New("webpEncodeRGB: bad arguments")
 		return
 	}
@@ -354,29 +345,25 @@ func webpEncodeRGB(
 		err = errors.New("webpEncodeRGB: bad arguments")
 		return
 	}
-	cPix := cgoSafePtr(pix)
-	defer cgoFreePtr(cPix)
+	isCBuf := cbuf.Own(pix)
+	cPix := cgoSafePtr(pix, isCBuf)
+	defer cgoFreePtr(cPix, isCBuf)
 
 	rv := C.cgoWebpEncodeRGB(
 		(*C.uint8_t)(cPix), C.int(width), C.int(height),
-		C.int(stride), C.float(quality_factor),
+		C.int(stride), C.float(quality),
 	)
 	if rv.ok != 1 {
 		err = errors.New("webpEncodeRGB: failed")
 		return
 	}
 
-	output = make([]byte, int(rv.size))
-	copy(output, ((*[1 << 30]byte)(unsafe.Pointer(rv.ptr)))[0:len(output):len(output)])
-	C.webpFree(unsafe.Pointer(rv.ptr))
+	output = newCBufferFrom(unsafe.Pointer(rv.ptr), int(rv.size))
 	return
 }
 
-func webpEncodeRGBA(
-	pix []byte, width, height, stride int,
-	quality_factor float32,
-) (output []byte, err error) {
-	if len(pix) == 0 || width <= 0 || height <= 0 || stride <= 0 || quality_factor < 0.0 {
+func webpEncodeRGBA(pix []byte, width, height, stride int, quality float32, cbuf CBuffer) (output CBuffer, err error) {
+	if len(pix) == 0 || width <= 0 || height <= 0 || stride <= 0 || quality < 0.0 {
 		err = errors.New("webpEncodeRGBA: bad arguments")
 		return
 	}
@@ -384,27 +371,24 @@ func webpEncodeRGBA(
 		err = errors.New("webpEncodeRGBA: bad arguments")
 		return
 	}
-	cPix := cgoSafePtr(pix)
-	defer cgoFreePtr(cPix)
+	isCBuf := cbuf.Own(pix)
+	cPix := cgoSafePtr(pix, isCBuf)
+	defer cgoFreePtr(cPix, isCBuf)
 
 	rv := C.cgoWebpEncodeRGBA(
 		(*C.uint8_t)(cPix), C.int(width), C.int(height),
-		C.int(stride), C.float(quality_factor),
+		C.int(stride), C.float(quality),
 	)
 	if rv.ok != 1 {
 		err = errors.New("webpEncodeRGBA: failed")
 		return
 	}
 
-	output = make([]byte, int(rv.size))
-	copy(output, ((*[1 << 30]byte)(unsafe.Pointer(rv.ptr)))[0:len(output):len(output)])
-	C.webpFree(unsafe.Pointer(rv.ptr))
+	output = newCBufferFrom(unsafe.Pointer(rv.ptr), int(rv.size))
 	return
 }
 
-func webpEncodeLosslessGray(
-	pix []byte, width, height, stride int,
-) (output []byte, err error) {
+func webpEncodeLosslessGray(pix []byte, width, height, stride int, cbuf CBuffer) (output CBuffer, err error) {
 	if len(pix) == 0 || width <= 0 || height <= 0 || stride <= 0 {
 		err = errors.New("webpEncodeLosslessGray: bad arguments")
 		return
@@ -413,8 +397,9 @@ func webpEncodeLosslessGray(
 		err = errors.New("webpEncodeLosslessGray: bad arguments")
 		return
 	}
-	cPix := cgoSafePtr(pix)
-	defer cgoFreePtr(cPix)
+	isCBuf := cbuf.Own(pix)
+	cPix := cgoSafePtr(pix, isCBuf)
+	defer cgoFreePtr(cPix, isCBuf)
 
 	rv := C.cgoWebpEncodeLosslessGray(
 		(*C.uint8_t)(cPix), C.int(width), C.int(height),
@@ -425,15 +410,11 @@ func webpEncodeLosslessGray(
 		return
 	}
 
-	output = make([]byte, int(rv.size))
-	copy(output, ((*[1 << 30]byte)(unsafe.Pointer(rv.ptr)))[0:len(output):len(output)])
-	C.webpFree(unsafe.Pointer(rv.ptr))
+	output = newCBufferFrom(unsafe.Pointer(rv.ptr), int(rv.size))
 	return
 }
 
-func webpEncodeLosslessRGB(
-	pix []byte, width, height, stride int,
-) (output []byte, err error) {
+func webpEncodeLosslessRGB(pix []byte, width, height, stride int, cbuf CBuffer) (output CBuffer, err error) {
 	if len(pix) == 0 || width <= 0 || height <= 0 || stride <= 0 {
 		err = errors.New("webpEncodeLosslessRGB: bad arguments")
 		return
@@ -442,8 +423,9 @@ func webpEncodeLosslessRGB(
 		err = errors.New("webpEncodeLosslessRGB: bad arguments")
 		return
 	}
-	cPix := cgoSafePtr(pix)
-	defer cgoFreePtr(cPix)
+	isCBuf := cbuf.Own(pix)
+	cPix := cgoSafePtr(pix, isCBuf)
+	defer cgoFreePtr(cPix, isCBuf)
 
 	rv := C.cgoWebpEncodeLosslessRGB(
 		(*C.uint8_t)(cPix), C.int(width), C.int(height),
@@ -454,15 +436,11 @@ func webpEncodeLosslessRGB(
 		return
 	}
 
-	output = make([]byte, int(rv.size))
-	copy(output, ((*[1 << 30]byte)(unsafe.Pointer(rv.ptr)))[0:len(output):len(output)])
-	C.webpFree(unsafe.Pointer(rv.ptr))
+	output = newCBufferFrom(unsafe.Pointer(rv.ptr), int(rv.size))
 	return
 }
 
-func webpEncodeLosslessRGBA(
-	pix []byte, width, height, stride int,
-) (output []byte, err error) {
+func webpEncodeLosslessRGBA(pix []byte, width, height, stride int, cbuf CBuffer) (output CBuffer, err error) {
 	if len(pix) == 0 || width <= 0 || height <= 0 || stride <= 0 {
 		err = errors.New("webpEncodeLosslessRGBA: bad arguments")
 		return
@@ -471,8 +449,9 @@ func webpEncodeLosslessRGBA(
 		err = errors.New("webpEncodeLosslessRGBA: bad arguments")
 		return
 	}
-	cPix := cgoSafePtr(pix)
-	defer cgoFreePtr(cPix)
+	isCBuf := cbuf.Own(pix)
+	cPix := cgoSafePtr(pix, isCBuf)
+	defer cgoFreePtr(cPix, isCBuf)
 
 	rv := C.cgoWebpEncodeLosslessRGBA(
 		(*C.uint8_t)(cPix), C.int(width), C.int(height),
@@ -483,9 +462,7 @@ func webpEncodeLosslessRGBA(
 		return
 	}
 
-	output = make([]byte, int(rv.size))
-	copy(output, ((*[1 << 30]byte)(unsafe.Pointer(rv.ptr)))[0:len(output):len(output)])
-	C.webpFree(unsafe.Pointer(rv.ptr))
+	output = newCBufferFrom(unsafe.Pointer(rv.ptr), int(rv.size))
 	return
 }
 
@@ -494,8 +471,9 @@ func webpGetEXIF(data []byte) (metadata []byte, err error) {
 		err = errors.New("webpGetEXIF: bad arguments")
 		return
 	}
-	cData := cgoSafePtr(data)
-	defer cgoFreePtr(cData)
+	isCBuf := false
+	cData := cgoSafePtr(data, isCBuf)
+	defer cgoFreePtr(cData, isCBuf)
 
 	rv := C.cgoWebpGetEXIF((*C.uint8_t)(cData), C.size_t(len(data)))
 	if rv.ok != 1 {
@@ -511,8 +489,9 @@ func webpGetICCP(data []byte) (metadata []byte, err error) {
 		err = errors.New("webpGetICCP: bad arguments")
 		return
 	}
-	cData := cgoSafePtr(data)
-	defer cgoFreePtr(cData)
+	isCBuf := false
+	cData := cgoSafePtr(data, isCBuf)
+	defer cgoFreePtr(cData, isCBuf)
 
 	rv := C.cgoWebpGetICCP((*C.uint8_t)(cData), C.size_t(len(data)))
 	if rv.ok != 1 {
@@ -528,8 +507,9 @@ func webpGetXMP(data []byte) (metadata []byte, err error) {
 		err = errors.New("webpGetXMP: bad arguments")
 		return
 	}
-	cData := cgoSafePtr(data)
-	defer cgoFreePtr(cData)
+	isCBuf := false
+	cData := cgoSafePtr(data, isCBuf)
+	defer cgoFreePtr(cData, isCBuf)
 
 	rv := C.cgoWebpGetXMP((*C.uint8_t)(cData), C.size_t(len(data)))
 	if rv.ok != 1 {
@@ -545,8 +525,9 @@ func webpGetMetadata(data []byte, format string) (metadata []byte, err error) {
 		err = errors.New("webpGetMetadata: bad arguments")
 		return
 	}
-	cData := cgoSafePtr(data)
-	defer cgoFreePtr(cData)
+	isCBuf := false
+	cData := cgoSafePtr(data, isCBuf)
+	defer cgoFreePtr(cData, isCBuf)
 
 	switch format {
 	case "EXIF":
@@ -587,10 +568,11 @@ func webpSetEXIF(data, metadata []byte) (newData []byte, err error) {
 		err = errors.New("webpSetEXIF: bad arguments")
 		return
 	}
-	cData := cgoSafePtr(data)
-	defer cgoFreePtr(cData)
-	cMetadata := cgoSafePtr(metadata)
-	defer cgoFreePtr(cMetadata)
+	isCBuf := false
+	cData := cgoSafePtr(data, isCBuf)
+	defer cgoFreePtr(cData, isCBuf)
+	cMetadata := cgoSafePtr(metadata, isCBuf)
+	defer cgoFreePtr(cMetadata, isCBuf)
 
 	rv := C.cgoWebpSetEXIF(
 		(*C.uint8_t)(cData), C.size_t(len(data)),
@@ -609,10 +591,11 @@ func webpSetICCP(data, metadata []byte) (newData []byte, err error) {
 		err = errors.New("webpSetICCP: bad arguments")
 		return
 	}
-	cData := cgoSafePtr(data)
-	defer cgoFreePtr(cData)
-	cMetadata := cgoSafePtr(metadata)
-	defer cgoFreePtr(cMetadata)
+	isCBuf := false
+	cData := cgoSafePtr(data, isCBuf)
+	defer cgoFreePtr(cData, isCBuf)
+	cMetadata := cgoSafePtr(metadata, isCBuf)
+	defer cgoFreePtr(cMetadata, isCBuf)
 
 	rv := C.cgoWebpSetICCP(
 		(*C.uint8_t)(cData), C.size_t(len(data)),
@@ -631,10 +614,11 @@ func webpSetXMP(data, metadata []byte) (newData []byte, err error) {
 		err = errors.New("webpSetXMP: bad arguments")
 		return
 	}
-	cData := cgoSafePtr(data)
-	defer cgoFreePtr(cData)
-	cMetadata := cgoSafePtr(metadata)
-	defer cgoFreePtr(cMetadata)
+	isCBuf := false
+	cData := cgoSafePtr(data, isCBuf)
+	defer cgoFreePtr(cData, isCBuf)
+	cMetadata := cgoSafePtr(metadata, isCBuf)
+	defer cgoFreePtr(cMetadata, isCBuf)
 
 	rv := C.cgoWebpSetXMP(
 		(*C.uint8_t)(cData), C.size_t(len(data)),
@@ -653,10 +637,11 @@ func webpSetMetadata(data, metadata []byte, format string) (newData []byte, err 
 		err = errors.New("webpSetMetadata: bad arguments")
 		return
 	}
-	cData := cgoSafePtr(data)
-	defer cgoFreePtr(cData)
-	cMetadata := cgoSafePtr(metadata)
-	defer cgoFreePtr(cMetadata)
+	isCBuf := false
+	cData := cgoSafePtr(data, isCBuf)
+	defer cgoFreePtr(cData, isCBuf)
+	cMetadata := cgoSafePtr(metadata, isCBuf)
+	defer cgoFreePtr(cMetadata, isCBuf)
 
 	switch format {
 	case "EXIF":
@@ -706,8 +691,9 @@ func webpDelEXIF(data []byte) (newData []byte, err error) {
 		err = errors.New("webpDelEXIF: bad arguments")
 		return
 	}
-	cData := cgoSafePtr(data)
-	defer cgoFreePtr(cData)
+	isCBuf := false
+	cData := cgoSafePtr(data, isCBuf)
+	defer cgoFreePtr(cData, isCBuf)
 
 	rv := C.cgoWebpDelEXIF(
 		(*C.uint8_t)(cData), C.size_t(len(data)),
@@ -725,8 +711,9 @@ func webpDelICCP(data []byte) (newData []byte, err error) {
 		err = errors.New("webpDelICCP: bad arguments")
 		return
 	}
-	cData := cgoSafePtr(data)
-	defer cgoFreePtr(cData)
+	isCBuf := false
+	cData := cgoSafePtr(data, isCBuf)
+	defer cgoFreePtr(cData, isCBuf)
 
 	rv := C.cgoWebpDelICCP(
 		(*C.uint8_t)(cData), C.size_t(len(data)),
@@ -744,8 +731,9 @@ func webpDelXMP(data []byte) (newData []byte, err error) {
 		err = errors.New("webpDelXMP: bad arguments")
 		return
 	}
-	cData := cgoSafePtr(data)
-	defer cgoFreePtr(cData)
+	isCBuf := false
+	cData := cgoSafePtr(data, isCBuf)
+	defer cgoFreePtr(cData, isCBuf)
 
 	rv := C.cgoWebpDelXMP(
 		(*C.uint8_t)(cData), C.size_t(len(data)),

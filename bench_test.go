@@ -8,8 +8,6 @@ import (
 	"bytes"
 	"io/ioutil"
 	"testing"
-
-	xwebp "golang.org/x/image/webp"
 )
 
 func BenchmarkGetInfo(b *testing.B) {
@@ -145,22 +143,6 @@ func BenchmarkDecodeRGBAEx(b *testing.B) {
 		b.StopTimer()
 		pix.Close()
 		b.StartTimer()
-	}
-	b.StopTimer()
-}
-
-func BenchmarkDecodeRGBA_x_image_webp(b *testing.B) {
-	data, err := ioutil.ReadFile("./testdata/1_webp_ll.webp")
-	if err != nil {
-		b.Fatal(err)
-	}
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		m, err := xwebp.Decode(bytes.NewReader(data))
-		if err != nil {
-			b.Fatal(err)
-		}
-		_ = m
 	}
 	b.StopTimer()
 }

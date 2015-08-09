@@ -6,8 +6,164 @@ package webp
 
 import (
 	"bytes"
+	"io/ioutil"
 	"testing"
+
+	xwebp "golang.org/x/image/webp"
 )
+
+func BenchmarkGetInfo(b *testing.B) {
+	data, err := ioutil.ReadFile("./testdata/1_webp_ll.webp")
+	if err != nil {
+		b.Fatal(err)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		GetInfoEx(data, nil)
+	}
+	b.StopTimer()
+}
+
+func BenchmarkGetInfoEx(b *testing.B) {
+	data, err := ioutil.ReadFile("./testdata/1_webp_ll.webp")
+	if err != nil {
+		b.Fatal(err)
+	}
+	cbuf := NewCBuffer(len(data))
+	copy(cbuf.CData(), data)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		GetInfoEx(cbuf.CData(), cbuf)
+	}
+	b.StopTimer()
+}
+
+func BenchmarkDecodeGray(b *testing.B) {
+	data, err := ioutil.ReadFile("./testdata/1_webp_ll.webp")
+	if err != nil {
+		b.Fatal(err)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		m, err := DecodeGray(data)
+		if err != nil {
+			b.Fatal(err)
+		}
+		_ = m
+	}
+	b.StopTimer()
+}
+
+func BenchmarkDecodeGrayEx(b *testing.B) {
+	data, err := ioutil.ReadFile("./testdata/1_webp_ll.webp")
+	if err != nil {
+		b.Fatal(err)
+	}
+	cbuf := NewCBuffer(len(data))
+	copy(cbuf.CData(), data)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		m, pix, err := DecodeGrayEx(cbuf.CData(), cbuf)
+		if err != nil {
+			b.Fatal(err)
+		}
+		_ = m
+		b.StopTimer()
+		pix.Close()
+		b.StartTimer()
+	}
+	b.StopTimer()
+}
+
+func BenchmarkDecodeRGB(b *testing.B) {
+	data, err := ioutil.ReadFile("./testdata/1_webp_ll.webp")
+	if err != nil {
+		b.Fatal(err)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		m, err := DecodeRGB(data)
+		if err != nil {
+			b.Fatal(err)
+		}
+		_ = m
+	}
+	b.StopTimer()
+}
+
+func BenchmarkDecodeRGBEx(b *testing.B) {
+	data, err := ioutil.ReadFile("./testdata/1_webp_ll.webp")
+	if err != nil {
+		b.Fatal(err)
+	}
+	cbuf := NewCBuffer(len(data))
+	copy(cbuf.CData(), data)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		m, pix, err := DecodeRGBEx(cbuf.CData(), cbuf)
+		if err != nil {
+			b.Fatal(err)
+		}
+		_ = m
+		b.StopTimer()
+		pix.Close()
+		b.StartTimer()
+	}
+	b.StopTimer()
+}
+
+func BenchmarkDecodeRGBA(b *testing.B) {
+	data, err := ioutil.ReadFile("./testdata/1_webp_ll.webp")
+	if err != nil {
+		b.Fatal(err)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		m, err := DecodeRGBA(data)
+		if err != nil {
+			b.Fatal(err)
+		}
+		_ = m
+	}
+	b.StopTimer()
+}
+
+func BenchmarkDecodeRGBAEx(b *testing.B) {
+	data, err := ioutil.ReadFile("./testdata/1_webp_ll.webp")
+	if err != nil {
+		b.Fatal(err)
+	}
+	cbuf := NewCBuffer(len(data))
+	copy(cbuf.CData(), data)
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		m, pix, err := DecodeRGBAEx(cbuf.CData(), cbuf)
+		if err != nil {
+			b.Fatal(err)
+		}
+		_ = m
+		b.StopTimer()
+		pix.Close()
+		b.StartTimer()
+	}
+	b.StopTimer()
+}
+
+func BenchmarkDecodeRGBA_x_image_webp(b *testing.B) {
+	data, err := ioutil.ReadFile("./testdata/1_webp_ll.webp")
+	if err != nil {
+		b.Fatal(err)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		m, err := xwebp.Decode(bytes.NewReader(data))
+		if err != nil {
+			b.Fatal(err)
+		}
+		_ = m
+	}
+	b.StopTimer()
+}
 
 func BenchmarkEncodeAndDecode(b *testing.B) {
 	var buf bytes.Buffer

@@ -20,18 +20,8 @@ Install CGO Version
 Install `GCC` or `MinGW` ([download here](http://tdm-gcc.tdragon.net/download)) at first,
 and then run these commands:
 
-1. Assure set the `CGO_ENABLED` environment variable to `1` to enable `CGO` (Default is enabled).
-2. `go get github.com/chai2010/webp`
-3. `go run hello.go`
-
-Install Pure Go Version
-=======================
-
-1. Assure set the `CGO_ENABLED` environment variable to `0` to disable `CGO` (Default is enabled).
-2. `go get github.com/chai2010/webp`
-3. `go run hello.go`
-
-Note: Only support `Decode` and `DecodeConfig`, `go test` will failed on some other api test.
+1. `go get github.com/chai2010/webp`
+2. `go run hello.go`
 
 
 Example

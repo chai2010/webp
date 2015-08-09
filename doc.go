@@ -8,7 +8,7 @@ Package webp implements a decoder and encoder for WEBP images.
 WEBP is defined at:
 https://developers.google.com/speed/webp/docs/riff_container
 
-Install CGO Version
+Install
 
 Install `GCC` or `MinGW` (http://tdm-gcc.tdragon.net/download) at first,
 and then run these commands:

@@ -14,8 +14,8 @@ PkgDoc: [http://godoc.org/github.com/chai2010/webp](http://godoc.org/github.com/
 
 [Benchmark test](bench).
 
-Install CGO Version
-===================
+Install
+=======
 
 Install `GCC` or `MinGW` ([download here](http://tdm-gcc.tdragon.net/download)) at first,
 and then run these commands:

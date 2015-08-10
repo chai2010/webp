@@ -26,11 +26,15 @@ func LoadConfig(name string, cbuf ...CBuffer) (config image.Config, err error) {
 	}
 	defer f.Close()
 
-	n, err := f.Read(cbuf[0].CData())
+	header := cbuf[0].CData()
+	if len(header) > maxWebpHeaderSize {
+		header = header[:maxWebpHeaderSize]
+	}
+	n, err := f.Read(header)
 	if err != nil && err != io.EOF {
 		return
 	}
-	header, err := cbuf[0].CData()[:n], nil
+	header = header[:n]
 	width, height, _, err := GetInfoEx(header, cbuf[0])
 	if err != nil {
 		return
@@ -60,18 +64,22 @@ func Load(name string, cbuf ...CBuffer) (m image.Image, err error) {
 		cbuf = []CBuffer{NewCBuffer(int(fi.Size()))}
 		defer cbuf[0].Close()
 	}
+
 	if len(cbuf[0].CData()) < int(fi.Size()) {
 		if err = cbuf[0].Resize(int(fi.Size())); err != nil {
 			return
 		}
 	}
+	data := cbuf[0].CData()
+	if n := int(fi.Size()); len(data) > n {
+		data = data[:n]
+	}
 
-	_, err = f.Read(cbuf[0].CData())
+	_, err = f.Read(data)
 	if err != nil {
 		return nil, err
 	}
-
-	m, pix, err := DecodeRGBAEx(cbuf[0].CData(), cbuf[0])
+	m, pix, err := DecodeRGBAEx(data, cbuf[0])
 	if err != nil {
 		return
 	}

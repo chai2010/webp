@@ -142,6 +142,8 @@ func BenchmarkDecode_{{.goodBaseName}}_chai2010_webp_cbuf(b *testing.B) {
 		_ = m
 		pix.Close()
 	}
+	b.StopTimer()
+	cbuf.Close()
 }
 
 func BenchmarkDecode_{{.goodBaseName}}_x_image_webp(b *testing.B) {

@@ -60,6 +60,8 @@ func BenchmarkDecode_1_webp_a_chai2010_webp_cbuf(b *testing.B) {
 		_ = m
 		pix.Close()
 	}
+	b.StopTimer()
+	cbuf.Close()
 }
 
 func BenchmarkDecode_1_webp_a_x_image_webp(b *testing.B) {
@@ -97,6 +99,8 @@ func BenchmarkDecode_1_webp_ll_chai2010_webp_cbuf(b *testing.B) {
 		_ = m
 		pix.Close()
 	}
+	b.StopTimer()
+	cbuf.Close()
 }
 
 func BenchmarkDecode_1_webp_ll_x_image_webp(b *testing.B) {
@@ -134,6 +138,8 @@ func BenchmarkDecode_2_webp_a_chai2010_webp_cbuf(b *testing.B) {
 		_ = m
 		pix.Close()
 	}
+	b.StopTimer()
+	cbuf.Close()
 }
 
 func BenchmarkDecode_2_webp_a_x_image_webp(b *testing.B) {
@@ -171,6 +177,8 @@ func BenchmarkDecode_2_webp_ll_chai2010_webp_cbuf(b *testing.B) {
 		_ = m
 		pix.Close()
 	}
+	b.StopTimer()
+	cbuf.Close()
 }
 
 func BenchmarkDecode_2_webp_ll_x_image_webp(b *testing.B) {
@@ -208,6 +216,8 @@ func BenchmarkDecode_3_webp_a_chai2010_webp_cbuf(b *testing.B) {
 		_ = m
 		pix.Close()
 	}
+	b.StopTimer()
+	cbuf.Close()
 }
 
 func BenchmarkDecode_3_webp_a_x_image_webp(b *testing.B) {
@@ -245,6 +255,8 @@ func BenchmarkDecode_3_webp_ll_chai2010_webp_cbuf(b *testing.B) {
 		_ = m
 		pix.Close()
 	}
+	b.StopTimer()
+	cbuf.Close()
 }
 
 func BenchmarkDecode_3_webp_ll_x_image_webp(b *testing.B) {
@@ -282,6 +294,8 @@ func BenchmarkDecode_4_webp_a_chai2010_webp_cbuf(b *testing.B) {
 		_ = m
 		pix.Close()
 	}
+	b.StopTimer()
+	cbuf.Close()
 }
 
 func BenchmarkDecode_4_webp_a_x_image_webp(b *testing.B) {
@@ -319,6 +333,8 @@ func BenchmarkDecode_4_webp_ll_chai2010_webp_cbuf(b *testing.B) {
 		_ = m
 		pix.Close()
 	}
+	b.StopTimer()
+	cbuf.Close()
 }
 
 func BenchmarkDecode_4_webp_ll_x_image_webp(b *testing.B) {
@@ -356,6 +372,8 @@ func BenchmarkDecode_5_webp_a_chai2010_webp_cbuf(b *testing.B) {
 		_ = m
 		pix.Close()
 	}
+	b.StopTimer()
+	cbuf.Close()
 }
 
 func BenchmarkDecode_5_webp_a_x_image_webp(b *testing.B) {
@@ -393,6 +411,8 @@ func BenchmarkDecode_5_webp_ll_chai2010_webp_cbuf(b *testing.B) {
 		_ = m
 		pix.Close()
 	}
+	b.StopTimer()
+	cbuf.Close()
 }
 
 func BenchmarkDecode_5_webp_ll_x_image_webp(b *testing.B) {
@@ -430,6 +450,8 @@ func BenchmarkDecode_blue_purple_pink_large_lossless_chai2010_webp_cbuf(b *testi
 		_ = m
 		pix.Close()
 	}
+	b.StopTimer()
+	cbuf.Close()
 }
 
 func BenchmarkDecode_blue_purple_pink_large_lossless_x_image_webp(b *testing.B) {
@@ -467,6 +489,8 @@ func BenchmarkDecode_blue_purple_pink_large_no_filter_lossy_chai2010_webp_cbuf(b
 		_ = m
 		pix.Close()
 	}
+	b.StopTimer()
+	cbuf.Close()
 }
 
 func BenchmarkDecode_blue_purple_pink_large_no_filter_lossy_x_image_webp(b *testing.B) {
@@ -504,6 +528,8 @@ func BenchmarkDecode_blue_purple_pink_large_normal_filter_lossy_chai2010_webp_cb
 		_ = m
 		pix.Close()
 	}
+	b.StopTimer()
+	cbuf.Close()
 }
 
 func BenchmarkDecode_blue_purple_pink_large_normal_filter_lossy_x_image_webp(b *testing.B) {
@@ -541,6 +567,8 @@ func BenchmarkDecode_blue_purple_pink_large_simple_filter_lossy_chai2010_webp_cb
 		_ = m
 		pix.Close()
 	}
+	b.StopTimer()
+	cbuf.Close()
 }
 
 func BenchmarkDecode_blue_purple_pink_large_simple_filter_lossy_x_image_webp(b *testing.B) {
@@ -578,6 +606,8 @@ func BenchmarkDecode_blue_purple_pink_lossless_chai2010_webp_cbuf(b *testing.B) 
 		_ = m
 		pix.Close()
 	}
+	b.StopTimer()
+	cbuf.Close()
 }
 
 func BenchmarkDecode_blue_purple_pink_lossless_x_image_webp(b *testing.B) {
@@ -615,6 +645,8 @@ func BenchmarkDecode_blue_purple_pink_lossy_chai2010_webp_cbuf(b *testing.B) {
 		_ = m
 		pix.Close()
 	}
+	b.StopTimer()
+	cbuf.Close()
 }
 
 func BenchmarkDecode_blue_purple_pink_lossy_x_image_webp(b *testing.B) {
@@ -652,6 +684,8 @@ func BenchmarkDecode_gopher_doc_1bpp_lossless_chai2010_webp_cbuf(b *testing.B) {
 		_ = m
 		pix.Close()
 	}
+	b.StopTimer()
+	cbuf.Close()
 }
 
 func BenchmarkDecode_gopher_doc_1bpp_lossless_x_image_webp(b *testing.B) {
@@ -689,6 +723,8 @@ func BenchmarkDecode_gopher_doc_2bpp_lossless_chai2010_webp_cbuf(b *testing.B) {
 		_ = m
 		pix.Close()
 	}
+	b.StopTimer()
+	cbuf.Close()
 }
 
 func BenchmarkDecode_gopher_doc_2bpp_lossless_x_image_webp(b *testing.B) {
@@ -726,6 +762,8 @@ func BenchmarkDecode_gopher_doc_4bpp_lossless_chai2010_webp_cbuf(b *testing.B) {
 		_ = m
 		pix.Close()
 	}
+	b.StopTimer()
+	cbuf.Close()
 }
 
 func BenchmarkDecode_gopher_doc_4bpp_lossless_x_image_webp(b *testing.B) {
@@ -763,6 +801,8 @@ func BenchmarkDecode_gopher_doc_8bpp_lossless_chai2010_webp_cbuf(b *testing.B) {
 		_ = m
 		pix.Close()
 	}
+	b.StopTimer()
+	cbuf.Close()
 }
 
 func BenchmarkDecode_gopher_doc_8bpp_lossless_x_image_webp(b *testing.B) {
@@ -800,6 +840,8 @@ func BenchmarkDecode_tux_lossless_chai2010_webp_cbuf(b *testing.B) {
 		_ = m
 		pix.Close()
 	}
+	b.StopTimer()
+	cbuf.Close()
 }
 
 func BenchmarkDecode_tux_lossless_x_image_webp(b *testing.B) {
@@ -837,6 +879,8 @@ func BenchmarkDecode_video_001_lossy_chai2010_webp_cbuf(b *testing.B) {
 		_ = m
 		pix.Close()
 	}
+	b.StopTimer()
+	cbuf.Close()
 }
 
 func BenchmarkDecode_video_001_lossy_x_image_webp(b *testing.B) {
@@ -874,6 +918,8 @@ func BenchmarkDecode_video_001_chai2010_webp_cbuf(b *testing.B) {
 		_ = m
 		pix.Close()
 	}
+	b.StopTimer()
+	cbuf.Close()
 }
 
 func BenchmarkDecode_video_001_x_image_webp(b *testing.B) {
@@ -911,6 +957,8 @@ func BenchmarkDecode_yellow_rose_lossless_chai2010_webp_cbuf(b *testing.B) {
 		_ = m
 		pix.Close()
 	}
+	b.StopTimer()
+	cbuf.Close()
 }
 
 func BenchmarkDecode_yellow_rose_lossless_x_image_webp(b *testing.B) {
@@ -948,6 +996,8 @@ func BenchmarkDecode_yellow_rose_lossy_with_alpha_chai2010_webp_cbuf(b *testing.
 		_ = m
 		pix.Close()
 	}
+	b.StopTimer()
+	cbuf.Close()
 }
 
 func BenchmarkDecode_yellow_rose_lossy_with_alpha_x_image_webp(b *testing.B) {
@@ -985,6 +1035,8 @@ func BenchmarkDecode_yellow_rose_lossy_chai2010_webp_cbuf(b *testing.B) {
 		_ = m
 		pix.Close()
 	}
+	b.StopTimer()
+	cbuf.Close()
 }
 
 func BenchmarkDecode_yellow_rose_lossy_x_image_webp(b *testing.B) {

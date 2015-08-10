@@ -12,7 +12,11 @@ webp
 
 PkgDoc: [http://godoc.org/github.com/chai2010/webp](http://godoc.org/github.com/chai2010/webp)
 
-[Benchmark test](bench).
+Benchmark
+=========
+
+![](bench/benchmark_result.png)
+
 
 Install
 =======

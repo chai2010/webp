@@ -1,3 +1,9 @@
+Benchmark
+=========
+
+![](benchmark_result.png)
+
+
 ```
 go test -bench=.
 PASS

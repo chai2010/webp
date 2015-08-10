@@ -1,0 +1,33 @@
+# Copyright 2015 ChaiShushan <chaishushan{AT}gmail.com>. All rights reserved.
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file.
+
+# go test -bench=x_image_webp$
+
+# name, run times, speed, ns/op
+1_webp_a                                  	     200	   7050403 ns/op
+1_webp_ll                                 	     200	   8560489 ns/op
+2_webp_a                                  	     200	   6720384 ns/op
+2_webp_ll                                 	     200	   6590377 ns/op
+3_webp_a                                  	     100	  22331277 ns/op
+3_webp_ll                                 	     100	  22431283 ns/op
+4_webp_a                                  	     300	   5160295 ns/op
+4_webp_ll                                 	     300	   5120292 ns/op
+5_webp_a                                  	     100	  12250700 ns/op
+5_webp_ll                                 	     200	   7765444 ns/op
+blue_purple_pink_large_lossless           	     100	  19851136 ns/op
+blue_purple_pink_large_no_filter_lossy    	     200	   7775445 ns/op
+blue_purple_pink_large_normal_filter_lossy	     100	  12130694 ns/op
+blue_purple_pink_large_simple_filter_lossy	     200	   9505543 ns/op
+blue_purple_pink_lossless                 	    1000	   1765100 ns/op
+blue_purple_pink_lossy                    	    2000	    766543 ns/op
+gopher_doc_1bpp_lossless                  	   10000	    134807 ns/op
+gopher_doc_2bpp_lossless                  	   10000	    164209 ns/op
+gopher_doc_4bpp_lossless                  	   10000	    222912 ns/op
+gopher_doc_8bpp_lossless                  	    5000	    327418 ns/op
+tux_lossless                              	     200	   6860392 ns/op
+video_001_lossy                           	    2000	    912552 ns/op
+video_001                                 	    2000	    929053 ns/op
+yellow_rose_lossless                      	     200	   8665495 ns/op
+yellow_rose_lossy_with_alpha              	     200	   7050403 ns/op
+yellow_rose_lossy                         	     300	   4996952 ns/op

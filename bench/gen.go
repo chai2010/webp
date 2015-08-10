@@ -6,8 +6,8 @@
 
 package main
 
-// This program generates x_benchmark_test.go. Invoke it as
-//	go run gen.go -output x_benchmark_test.go
+// This program generates z_benchmark_test.go. Invoke it as
+//	go run gen.go -output z_benchmark_test.go
 
 import (
 	"bytes"
@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	flagOutputFilename = flag.String("output", "x_benchmark_test.go", "output file name")
+	flagOutputFilename = flag.String("output", "z_benchmark_test.go", "output file name")
 )
 
 var testFilenames = []string{

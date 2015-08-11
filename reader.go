@@ -16,15 +16,21 @@ import (
 )
 
 func LoadConfig(name string, cbuf ...CBuffer) (config image.Config, err error) {
-	if len(cbuf) == 0 || cbuf[0] == nil {
-		cbuf = []CBuffer{NewCBuffer(maxWebpHeaderSize)}
-		defer cbuf[0].Close()
-	}
 	f, err := os.Open(name)
 	if err != nil {
 		return image.Config{}, err
 	}
 	defer f.Close()
+
+	if len(cbuf) == 0 || cbuf[0] == nil {
+		cbuf = []CBuffer{NewCBuffer(maxWebpHeaderSize)}
+		defer cbuf[0].Close()
+	}
+	if len(cbuf[0].CData()) == 0 {
+		if err = cbuf[0].Resize(maxWebpHeaderSize); err != nil {
+			return
+		}
+	}
 
 	header := cbuf[0].CData()
 	if len(header) > maxWebpHeaderSize {

@@ -4,4 +4,5 @@
 
 //go:generate go run gen.go
 
+// Package webp_bench provides more benchmark for webp.
 package webp_bench

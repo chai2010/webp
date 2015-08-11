@@ -47,7 +47,7 @@ func ExampleCBuffer_resize() {
 	// len(data): 200
 }
 
-func ExampleCBuffer_lock_address() {
+func ExampleCBuffer_lockAddress() {
 	const dontResize = true
 	cbuf := NewCBuffer(100, dontResize)
 	defer cbuf.Close()

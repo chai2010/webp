@@ -85,7 +85,7 @@ func ExampleEncode_rgb() {
 	_ = buf.Bytes()
 }
 
-func ExampleEncode_rgb48_memp() {
+func ExampleEncode_rgb48MemP() {
 	rgb48 := NewMemPImage(image.Rect(0, 0, 400, 300), 3, reflect.Uint16)
 
 	var buf bytes.Buffer

@@ -26,7 +26,7 @@ func LoadConfig(name string, cbuf ...CBuffer) (config image.Config, err error) {
 		cbuf = []CBuffer{NewCBuffer(maxWebpHeaderSize)}
 		defer cbuf[0].Close()
 	}
-	if len(cbuf[0].CData()) == 0 {
+	if len(cbuf[0].CData()) < maxWebpHeaderSize {
 		if err = cbuf[0].Resize(maxWebpHeaderSize); err != nil {
 			return
 		}

@@ -280,6 +280,7 @@ func webpEncodeGray(pix []byte, width, height, stride int, quality float32) (out
 		err = errors.New("webpEncodeGray: failed")
 		return
 	}
+	defer C.free(unsafe.Pointer(cptr))
 
 	output = make([]byte, int(cptr_size))
 	copy(pix, ((*[1 << 30]byte)(unsafe.Pointer(cptr)))[0:len(output):len(output)])

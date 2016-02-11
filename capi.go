@@ -20,21 +20,11 @@ package webp
 #cgo CFLAGS: -I./internal/libwebp/include  -I./internal/libwebp/src -Wno-pointer-sign -DWEBP_USE_THREAD
 #cgo !windows LDFLAGS: -lm
 
-#include "webp.h"
+#include <webp.h>
+#include <webp/decode.h>
 
 #include <stdlib.h>
 #include <string.h>
-
-struct cgoWebpGetInfoReturn {
-	int ok;
-	int width;
-	int height;
-	int has_alpha;
-} cgoWebpGetInfo(const uint8_t* data, size_t data_size) {
-	struct cgoWebpGetInfoReturn t;
-	t.ok = webpGetInfo(data, data_size, &t.width, &t.height, &t.has_alpha);
-	return t;
-}
 
 struct cgoWebpDecodeGrayReturn {
 	int ok;
@@ -240,20 +230,20 @@ import (
 
 func webpGetInfo(data []byte) (width, height int, hasAlpha bool, err error) {
 	if len(data) == 0 {
-		err = errors.New("webpGetInfo: bad arguments")
+		err = errors.New("webpGetInfo: bad arguments, data is empty")
 		return
 	}
 	if len(data) > maxWebpHeaderSize {
 		data = data[:maxWebpHeaderSize]
 	}
 
-	rv := C.cgoWebpGetInfo((*C.uint8_t)(unsafe.Pointer(&data[0])), C.size_t(len(data)))
-	if rv.ok != 1 {
-		err = errors.New("webpGetInfo: failed")
+	var features C.WebPBitstreamFeatures
+	if C.WebPGetFeatures((*C.uint8_t)(unsafe.Pointer(&data[0])), C.size_t(len(data)), &features) != C.VP8_STATUS_OK {
+		err = errors.New("C.WebPGetFeatures: failed")
 		return
 	}
-	width, height = int(rv.width), int(rv.height)
-	hasAlpha = (rv.has_alpha != 0)
+	width, height = int(features.width), int(features.height)
+	hasAlpha = (features.has_alpha != 0)
 	return
 }
 

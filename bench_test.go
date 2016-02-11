@@ -17,21 +17,7 @@ func BenchmarkGetInfo(b *testing.B) {
 	}
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		GetInfoEx(data, nil)
-	}
-	b.StopTimer()
-}
-
-func BenchmarkGetInfoEx(b *testing.B) {
-	data, err := ioutil.ReadFile("./testdata/1_webp_ll.webp")
-	if err != nil {
-		b.Fatal(err)
-	}
-	cbuf := NewCBuffer(len(data))
-	copy(cbuf.CData(), data)
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		GetInfoEx(cbuf.CData(), cbuf)
+		GetInfo(data)
 	}
 	b.StopTimer()
 }

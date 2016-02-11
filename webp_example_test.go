@@ -63,22 +63,3 @@ func ExampleGetInfo_noAlpha() {
 	// height: 103
 	// hasAlpha: false
 }
-
-func ExampleGetInfoEx() {
-	cbuf := xLoadCBuffer("1_webp_a.webp")
-	defer cbuf.Close()
-
-	width, height, hasAlpha, err := GetInfoEx(cbuf.CData(), cbuf)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Printf("width: %v\n", width)
-	fmt.Printf("height: %v\n", height)
-	fmt.Printf("hasAlpha: %v\n", hasAlpha)
-
-	// Output:
-	// width: 400
-	// height: 301
-	// hasAlpha: true
-}

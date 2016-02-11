@@ -18,14 +18,7 @@ var (
 )
 
 func GetInfo(data []byte) (width, height int, hasAlpha bool, err error) {
-	return webpGetInfo(data, nilCBuffer)
-}
-
-func GetInfoEx(data []byte, cbuf CBuffer) (width, height int, hasAlpha bool, err error) {
-	if cbuf == nil {
-		cbuf = nilCBuffer
-	}
-	return webpGetInfo(data, cbuf)
+	return webpGetInfo(data)
 }
 
 func DecodeGray(data []byte) (m *image.Gray, err error) {

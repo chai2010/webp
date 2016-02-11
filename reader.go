@@ -41,7 +41,7 @@ func LoadConfig(name string, cbuf ...CBuffer) (config image.Config, err error) {
 		return
 	}
 	header = header[:n]
-	width, height, _, err := GetInfoEx(header, cbuf[0])
+	width, height, _, err := GetInfo(header)
 	if err != nil {
 		return
 	}

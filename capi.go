@@ -238,7 +238,7 @@ import (
 	"unsafe"
 )
 
-func webpGetInfo(data []byte, cbuf CBuffer) (width, height int, hasAlpha bool, err error) {
+func webpGetInfo(data []byte) (width, height int, hasAlpha bool, err error) {
 	if len(data) == 0 {
 		err = errors.New("webpGetInfo: bad arguments")
 		return
@@ -246,11 +246,8 @@ func webpGetInfo(data []byte, cbuf CBuffer) (width, height int, hasAlpha bool, e
 	if len(data) > maxWebpHeaderSize {
 		data = data[:maxWebpHeaderSize]
 	}
-	isCBuf := cbuf.Own(data)
-	cData := cgoSafePtr(data, isCBuf)
-	defer cgoFreePtr(cData, isCBuf)
 
-	rv := C.cgoWebpGetInfo((*C.uint8_t)(cData), C.size_t(len(data)))
+	rv := C.cgoWebpGetInfo((*C.uint8_t)(unsafe.Pointer(&data[0])), C.size_t(len(data)))
 	if rv.ok != 1 {
 		err = errors.New("webpGetInfo: failed")
 		return

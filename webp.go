@@ -35,29 +35,12 @@ func DecodeGray(data []byte) (m *image.Gray, err error) {
 }
 
 func DecodeRGB(data []byte) (m *RGBImage, err error) {
-	pix, w, h, err := webpDecodeRGB(data, nilCBuffer)
-	if err != nil {
-		return
-	}
-	defer pix.Close()
-	m = &RGBImage{
-		XPix:    append([]byte{}, pix.CData()...),
-		XStride: 3 * w,
-		XRect:   image.Rect(0, 0, w, h),
-	}
-	return
-}
-
-func DecodeRGBEx(data []byte, cbuf CBuffer) (m *RGBImage, pix CBuffer, err error) {
-	if cbuf == nil {
-		cbuf = nilCBuffer
-	}
-	pix, w, h, err := webpDecodeRGB(data, cbuf)
+	pix, w, h, err := webpDecodeRGB(data)
 	if err != nil {
 		return
 	}
 	m = &RGBImage{
-		XPix:    pix.CData(),
+		XPix:    pix,
 		XStride: 3 * w,
 		XRect:   image.Rect(0, 0, w, h),
 	}

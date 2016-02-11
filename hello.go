@@ -52,4 +52,6 @@ func main() {
 	if err = ioutil.WriteFile("output.webp", buf.Bytes(), 0666); err != nil {
 		log.Println(err)
 	}
+
+	fmt.Println("Save output.webp ok")
 }

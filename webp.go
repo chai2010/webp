@@ -48,29 +48,12 @@ func DecodeRGB(data []byte) (m *RGBImage, err error) {
 }
 
 func DecodeRGBA(data []byte) (m *image.RGBA, err error) {
-	pix, w, h, err := webpDecodeRGBA(data, nilCBuffer)
-	if err != nil {
-		return
-	}
-	defer pix.Close()
-	m = &image.RGBA{
-		Pix:    append([]byte{}, pix.CData()...),
-		Stride: 4 * w,
-		Rect:   image.Rect(0, 0, w, h),
-	}
-	return
-}
-
-func DecodeRGBAEx(data []byte, cbuf CBuffer) (m *image.RGBA, pix CBuffer, err error) {
-	if cbuf == nil {
-		cbuf = nilCBuffer
-	}
-	pix, w, h, err := webpDecodeRGBA(data, cbuf)
+	pix, w, h, err := webpDecodeRGBA(data)
 	if err != nil {
 		return
 	}
 	m = &image.RGBA{
-		Pix:    pix.CData(),
+		Pix:    pix,
 		Stride: 4 * w,
 		Rect:   image.Rect(0, 0, w, h),
 	}

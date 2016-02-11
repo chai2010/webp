@@ -26,17 +26,6 @@ package webp
 #include <stdlib.h>
 #include <string.h>
 
-struct cgoWebpDecodeRGBAReturn {
-	int ok;
-	int width;
-	int height;
-	uint8_t* ptr;
-} cgoWebpDecodeRGBA(const uint8_t* data, size_t data_size) {
-	struct cgoWebpDecodeRGBAReturn t;
-	t.ptr = webpDecodeRGBA(data, data_size, &t.width, &t.height);
-	t.ok = (t.ptr != NULL)? 1: 0;
-	return t;
-}
 
 struct cgoWebpEncodeGrayReturn {
 	int ok;
@@ -237,7 +226,8 @@ func webpDecodeGray(data []byte) (pix []byte, width, height int, err error) {
 	}
 	defer C.free(unsafe.Pointer(cptr))
 
-	pix = append([]byte{}, ((*[1 << 30]byte)(unsafe.Pointer(cptr)))[0:len(pix):len(pix)]...)
+	pix = make([]byte, int(cw*ch*1))
+	copy(pix, ((*[1 << 30]byte)(unsafe.Pointer(cptr)))[0:len(pix):len(pix)])
 	width, height = int(cw), int(ch)
 	return
 }
@@ -256,28 +246,29 @@ func webpDecodeRGB(data []byte) (pix []byte, width, height int, err error) {
 	}
 	defer C.free(unsafe.Pointer(cptr))
 
-	pix = append([]byte{}, ((*[1 << 30]byte)(unsafe.Pointer(cptr)))[0:len(pix):len(pix)]...)
+	pix = make([]byte, int(cw*ch*3))
+	copy(pix, ((*[1 << 30]byte)(unsafe.Pointer(cptr)))[0:len(pix):len(pix)])
 	width, height = int(cw), int(ch)
 	return
 }
 
-func webpDecodeRGBA(data []byte, cbuf CBuffer) (pix CBuffer, width, height int, err error) {
+func webpDecodeRGBA(data []byte) (pix []byte, width, height int, err error) {
 	if len(data) == 0 {
 		err = errors.New("webpDecodeRGBA: bad arguments")
 		return
 	}
-	isCBuf := cbuf.Own(data)
-	cData := cgoSafePtr(data, isCBuf)
-	defer cgoFreePtr(cData, isCBuf)
 
-	rv := C.cgoWebpDecodeRGBA((*C.uint8_t)(cData), C.size_t(len(data)))
-	if rv.ok != 1 {
+	var cw, ch C.int
+	var cptr = C.webpDecodeRGBA((*C.uint8_t)(unsafe.Pointer(&data[0])), C.size_t(len(data)), &cw, &ch)
+	if cptr == nil {
 		err = errors.New("webpDecodeRGBA: failed")
 		return
 	}
+	defer C.free(unsafe.Pointer(cptr))
 
-	width, height = int(rv.width), int(rv.height)
-	pix = newCBufferFrom(unsafe.Pointer(rv.ptr), width*height*4)
+	pix = make([]byte, int(cw*ch*4))
+	copy(pix, ((*[1 << 30]byte)(unsafe.Pointer(cptr)))[0:len(pix):len(pix)])
+	width, height = int(cw), int(ch)
 	return
 }
 

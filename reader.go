@@ -15,27 +15,14 @@ import (
 	"os"
 )
 
-func LoadConfig(name string, cbuf ...CBuffer) (config image.Config, err error) {
+func LoadConfig(name string) (config image.Config, err error) {
 	f, err := os.Open(name)
 	if err != nil {
 		return image.Config{}, err
 	}
 	defer f.Close()
 
-	if len(cbuf) == 0 || cbuf[0] == nil {
-		cbuf = []CBuffer{NewCBuffer(maxWebpHeaderSize)}
-		defer cbuf[0].Close()
-	}
-	if len(cbuf[0].CData()) < maxWebpHeaderSize {
-		if err = cbuf[0].Resize(maxWebpHeaderSize); err != nil {
-			return
-		}
-	}
-
-	header := cbuf[0].CData()
-	if len(header) > maxWebpHeaderSize {
-		header = header[:maxWebpHeaderSize]
-	}
+	header := make([]byte, maxWebpHeaderSize)
 	n, err := f.Read(header)
 	if err != nil && err != io.EOF {
 		return
@@ -52,7 +39,7 @@ func LoadConfig(name string, cbuf ...CBuffer) (config image.Config, err error) {
 	return
 }
 
-func Load(name string, cbuf ...CBuffer) (m image.Image, err error) {
+func Load(name string) (m image.Image, err error) {
 	f, err := os.Open(name)
 	if err != nil {
 		return nil, err
@@ -66,32 +53,15 @@ func Load(name string, cbuf ...CBuffer) (m image.Image, err error) {
 	if fi.Size() > (2 << 30) {
 		return nil, errors.New("webp: Load, file size is too large (> 2GB)!")
 	}
-	if len(cbuf) == 0 || cbuf[0] == nil {
-		cbuf = []CBuffer{NewCBuffer(int(fi.Size()))}
-		defer cbuf[0].Close()
-	}
 
-	if len(cbuf[0].CData()) < int(fi.Size()) {
-		if err = cbuf[0].Resize(int(fi.Size())); err != nil {
-			return
-		}
-	}
-	data := cbuf[0].CData()
-	if n := int(fi.Size()); len(data) > n {
-		data = data[:n]
-	}
-
-	_, err = f.Read(data)
-	if err != nil {
+	data := make([]byte, int(fi.Size()))
+	if _, err = f.Read(data); err != nil {
 		return nil, err
 	}
-	m, pix, err := DecodeRGBAEx(data, cbuf[0])
-	if err != nil {
+	if m, err = DecodeRGBA(data); err != nil {
 		return
 	}
-	pix.Close()
-
-	return m, nil
+	return
 }
 
 // DecodeConfig returns the color model and dimensions of a WEBP image without

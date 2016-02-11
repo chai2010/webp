@@ -70,27 +70,6 @@ func BenchmarkDecodeRGBA(b *testing.B) {
 	b.StopTimer()
 }
 
-func BenchmarkDecodeRGBAEx(b *testing.B) {
-	data, err := ioutil.ReadFile("./testdata/1_webp_ll.webp")
-	if err != nil {
-		b.Fatal(err)
-	}
-	cbuf := NewCBuffer(len(data))
-	copy(cbuf.CData(), data)
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		m, pix, err := DecodeRGBAEx(cbuf.CData(), cbuf)
-		if err != nil {
-			b.Fatal(err)
-		}
-		_ = m
-		b.StopTimer()
-		pix.Close()
-		b.StartTimer()
-	}
-	b.StopTimer()
-}
-
 func BenchmarkEncodeAndDecode(b *testing.B) {
 	var buf bytes.Buffer
 

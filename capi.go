@@ -2,7 +2,17 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// +build cgo
+//
+// TODO(chai2010): simplify cgo pointer:
+//
+// CBuffer/cgoSafePtr/cgoFreePtr removed!
+//
+// Go1.3: Changes to the garbage collector
+// http://golang.org/doc/go1.3#garbage_collector
+//
+// Go1.6:
+// https://github.com/golang/proposal/blob/master/design/12416-cgo-pointers.md
+//
 
 package webp
 

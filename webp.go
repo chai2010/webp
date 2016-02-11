@@ -62,21 +62,7 @@ func DecodeRGBA(data []byte) (m *image.RGBA, err error) {
 
 func EncodeGray(m image.Image, quality float32) (data []byte, err error) {
 	p := toGrayImage(m)
-	cbuf, err := webpEncodeGray(p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride, quality, nilCBuffer)
-	if err != nil {
-		return
-	}
-	data = append([]byte{}, cbuf.CData()...)
-	cbuf.Close()
-	return
-}
-
-func EncodeGrayEx(m image.Image, quality float32, cbuf CBuffer) (data CBuffer, err error) {
-	if cbuf == nil {
-		cbuf = nilCBuffer
-	}
-	p := toGrayImage(m)
-	data, err = webpEncodeGray(p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride, quality, cbuf)
+	data, err = webpEncodeGray(p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride, quality)
 	if err != nil {
 		return
 	}

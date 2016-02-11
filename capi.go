@@ -26,18 +26,6 @@ package webp
 #include <stdlib.h>
 #include <string.h>
 
-
-struct cgoWebpEncodeGrayReturn {
-	int ok;
-	size_t size;
-	uint8_t* ptr;
-} cgoWebpEncodeGray(const uint8_t* data, int width, int height, int stride, float quality_factor) {
-	struct cgoWebpEncodeGrayReturn t;
-	t.size = webpEncodeGray(data, width, height, stride, quality_factor, &t.ptr);
-	t.ok = (t.size != 0)? 1: 0;
-	return t;
-}
-
 struct cgoWebpEncodeRGBReturn {
 	int ok;
 	size_t size;
@@ -272,7 +260,7 @@ func webpDecodeRGBA(data []byte) (pix []byte, width, height int, err error) {
 	return
 }
 
-func webpEncodeGray(pix []byte, width, height, stride int, quality float32, cbuf CBuffer) (output CBuffer, err error) {
+func webpEncodeGray(pix []byte, width, height, stride int, quality float32) (output []byte, err error) {
 	if len(pix) == 0 || width <= 0 || height <= 0 || stride <= 0 || quality < 0.0 {
 		err = errors.New("webpEncodeGray: bad arguments")
 		return
@@ -281,20 +269,20 @@ func webpEncodeGray(pix []byte, width, height, stride int, quality float32, cbuf
 		err = errors.New("webpEncodeGray: bad arguments")
 		return
 	}
-	isCBuf := cbuf.Own(pix)
-	cPix := cgoSafePtr(pix, isCBuf)
-	defer cgoFreePtr(cPix, isCBuf)
 
-	rv := C.cgoWebpEncodeGray(
-		(*C.uint8_t)(cPix), C.int(width), C.int(height),
+	var cptr_size C.size_t
+	var cptr = C.webpEncodeGray(
+		(*C.uint8_t)(unsafe.Pointer(&pix[0])), C.int(width), C.int(height),
 		C.int(stride), C.float(quality),
+		&cptr_size,
 	)
-	if rv.ok != 1 {
+	if cptr == nil {
 		err = errors.New("webpEncodeGray: failed")
 		return
 	}
 
-	output = newCBufferFrom(unsafe.Pointer(rv.ptr), int(rv.size))
+	output = make([]byte, int(cptr_size))
+	copy(pix, ((*[1 << 30]byte)(unsafe.Pointer(cptr)))[0:len(output):len(output)])
 	return
 }
 

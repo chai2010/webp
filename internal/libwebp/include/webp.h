@@ -31,9 +31,9 @@ uint8_t* webpDecodeRGBA(
 	int* width, int* height
 );
 
-size_t webpEncodeGray(
+uint8_t* webpEncodeGray(
 	const uint8_t* gray, int width, int height, int stride, float quality_factor,
-	uint8_t** output
+	size_t* output_size
 );
 size_t webpEncodeRGB(
 	const uint8_t* rgb, int width, int height, int stride, float quality_factor,

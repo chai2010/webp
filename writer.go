@@ -70,9 +70,12 @@ func encode(w io.Writer, m image.Image, opt *Options, cbuf CBuffer) (err error) 
 		}
 		switch m := adjustImage(m).(type) {
 		case *image.Gray:
-			if output, err = EncodeGrayEx(m, quality, cbuf); err != nil {
+			var output []byte
+			if output, err = EncodeGray(m, quality); err != nil {
 				return
 			}
+			_, err = w.Write(output)
+			return
 		case *RGBImage:
 			if output, err = EncodeRGBEx(m, quality, cbuf); err != nil {
 				return

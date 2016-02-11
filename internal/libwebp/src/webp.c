@@ -87,16 +87,16 @@ uint8_t* webpDecodeRGBA(
 	return WebPDecodeRGBA(data, data_size, width, height);
 }
 
-size_t webpEncodeGray(
+uint8_t* webpEncodeGray(
 	const uint8_t* gray, int width, int height, int stride, float quality_factor,
-	uint8_t** output
+	size_t* output_size
 ) {
-	size_t output_size;
+	uint8_t* output;
 	uint8_t* rgb;
 	int x, y;
 
 	if((rgb = (uint8_t*)malloc(width*height*3)) == NULL) {
-		return 0;
+		return NULL;
 	}
 	for(y = 0; y < height; ++y) {
 		const uint8_t* src = gray + y*stride;
@@ -109,9 +109,9 @@ size_t webpEncodeGray(
 		}
 	}
 
-	output_size = WebPEncodeRGB(rgb, width, height, width*3, quality_factor, output);
+	*output_size = WebPEncodeRGB(rgb, width, height, width*3, quality_factor, &output);
 	free(rgb);
-	return output_size;
+	return output;
 }
 
 size_t webpEncodeRGB(

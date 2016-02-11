@@ -26,18 +26,6 @@ package webp
 #include <stdlib.h>
 #include <string.h>
 
-struct cgoWebpDecodeGrayReturn {
-	int ok;
-	int width;
-	int height;
-	uint8_t* ptr;
-} cgoWebpDecodeGray(const uint8_t* data, size_t data_size) {
-	struct cgoWebpDecodeGrayReturn t;
-	t.ptr = webpDecodeGray(data, data_size, &t.width, &t.height);
-	t.ok = (t.ptr != NULL)? 1: 0;
-	return t;
-}
-
 struct cgoWebpDecodeRGBReturn {
 	int ok;
 	int width;
@@ -247,23 +235,22 @@ func webpGetInfo(data []byte) (width, height int, hasAlpha bool, err error) {
 	return
 }
 
-func webpDecodeGray(data []byte, cbuf CBuffer) (pix CBuffer, width, height int, err error) {
+func webpDecodeGray(data []byte) (pix []byte, width, height int, err error) {
 	if len(data) == 0 {
 		err = errors.New("webpDecodeGray: bad arguments")
 		return
 	}
-	isCBuf := cbuf.Own(data)
-	cData := cgoSafePtr(data, isCBuf)
-	defer cgoFreePtr(cData, isCBuf)
 
-	rv := C.cgoWebpDecodeGray((*C.uint8_t)(cData), C.size_t(len(data)))
-	if rv.ok != 1 {
+	var cw, ch C.int
+	var cptr = C.webpDecodeGray((*C.uint8_t)(unsafe.Pointer(&data[0])), C.size_t(len(data)), &cw, &ch)
+	if cptr == nil {
 		err = errors.New("webpDecodeGray: failed")
 		return
 	}
+	defer C.free(unsafe.Pointer(cptr))
 
-	width, height = int(rv.width), int(rv.height)
-	pix = newCBufferFrom(unsafe.Pointer(rv.ptr), width*height*1)
+	pix = append([]byte{}, ((*[1 << 30]byte)(unsafe.Pointer(cptr)))[0:len(pix):len(pix)]...)
+	width, height = int(cw), int(ch)
 	return
 }
 

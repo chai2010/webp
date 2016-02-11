@@ -22,29 +22,12 @@ func GetInfo(data []byte) (width, height int, hasAlpha bool, err error) {
 }
 
 func DecodeGray(data []byte) (m *image.Gray, err error) {
-	pix, w, h, err := webpDecodeGray(data, nilCBuffer)
-	if err != nil {
-		return
-	}
-	defer pix.Close()
-	m = &image.Gray{
-		Pix:    append([]byte{}, pix.CData()...),
-		Stride: 1 * w,
-		Rect:   image.Rect(0, 0, w, h),
-	}
-	return
-}
-
-func DecodeGrayEx(data []byte, cbuf CBuffer) (m *image.Gray, pix CBuffer, err error) {
-	if cbuf == nil {
-		cbuf = nilCBuffer
-	}
-	pix, w, h, err := webpDecodeGray(data, cbuf)
+	pix, w, h, err := webpDecodeGray(data)
 	if err != nil {
 		return
 	}
 	m = &image.Gray{
-		Pix:    pix.CData(),
+		Pix:    pix,
 		Stride: 1 * w,
 		Rect:   image.Rect(0, 0, w, h),
 	}

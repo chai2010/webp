@@ -18,16 +18,6 @@ func xLoadData(filename string) []byte {
 	return data
 }
 
-func xLoadCBuffer(filename string) CBuffer {
-	data, err := ioutil.ReadFile("./testdata/" + filename)
-	if err != nil {
-		log.Fatal(err)
-	}
-	cbuf := NewCBuffer(len(data))
-	copy(cbuf.CData(), data)
-	return cbuf
-}
-
 func ExampleGetInfo() {
 	data := xLoadData("1_webp_a.webp")
 

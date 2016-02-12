@@ -13,10 +13,6 @@ const (
 	maxWebpHeaderSize = 32
 )
 
-var (
-	nilCBuffer = NewCBuffer(0)
-)
-
 func GetInfo(data []byte) (width, height int, hasAlpha bool, err error) {
 	return webpGetInfo(data)
 }

@@ -92,26 +92,12 @@ import (
 	x_image_webp "golang.org/x/image/webp"
 )
 
-type CBuffer interface {
-	chai2010_webp.CBuffer
-}
-
 func tbLoadData(tb testing.TB, filename string) []byte {
 	data, err := ioutil.ReadFile("../testdata/" + filename)
 	if err != nil {
 		tb.Fatal(err)
 	}
 	return data
-}
-
-func tbLoadCData(tb testing.TB, filename string) CBuffer {
-	data, err := ioutil.ReadFile("../testdata/" + filename)
-	if err != nil {
-		tb.Fatal(err)
-	}
-	cbuf := chai2010_webp.NewCBuffer(len(data))
-	copy(cbuf.CData(), data)
-	return cbuf
 }
 
 `[1:], outputFilename)
@@ -129,21 +115,6 @@ func BenchmarkDecode_{{.goodBaseName}}_chai2010_webp(b *testing.B) {
 		}
 		_ = m
 	}
-}
-
-func BenchmarkDecode_{{.goodBaseName}}_chai2010_webp_cbuf(b *testing.B) {
-	cbuf := tbLoadCData(b, "{{.filename}}")
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		m, pix, err := chai2010_webp.DecodeRGBAEx(cbuf.CData(), cbuf)
-		if err != nil {
-			b.Fatal(err)
-		}
-		_ = m
-		pix.Close()
-	}
-	b.StopTimer()
-	cbuf.Close()
 }
 
 func BenchmarkDecode_{{.goodBaseName}}_x_image_webp(b *testing.B) {

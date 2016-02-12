@@ -6,8 +6,11 @@
 
 reset
 
-set encoding utf8
-set terminal png font "simsun.ttc,12"
+# for windows
+# set encoding utf8
+# set font "simsun.ttc,12"
+
+set terminal png
 
 set output "benchmark_result.png"
 set title "WebP Decode Benchmark (Low is Better)"
@@ -18,6 +21,4 @@ set xtics rotate by -90
 #set yrange [0:50]
 plot \
 	"benchmark_result_chai2010_webp.txt" using 3:xticlabels(1) title "chai2010/webp" with linespoints, \
-	"benchmark_result_chai2010_webp_cbuf.txt" using 3:xticlabels(1) title "chai2010/webp:CBuffer" with linespoints, \
 	"benchmark_result_x_image_webp.txt" using 3:xticlabels(1) title "x/image/webp" with linespoints, \
-

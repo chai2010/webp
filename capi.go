@@ -26,39 +26,6 @@ package webp
 #include <stdlib.h>
 #include <string.h>
 
-
-
-struct cgoWebpSetEXIFReturn {
-	int ok;
-	size_t size;
-	uint8_t* ptr;
-} cgoWebpSetEXIF(const uint8_t* data, size_t data_size, const char* metadata, size_t metadata_size) {
-	struct cgoWebpSetEXIFReturn t;
-	t.ptr = webpSetEXIF(data, data_size, metadata, metadata_size, &t.size);
-	t.ok = (t.size != 0)? 1: 0;
-	return t;
-}
-struct cgoWebpSetICCPReturn {
-	int ok;
-	size_t size;
-	uint8_t* ptr;
-} cgoWebpSetICCP(const uint8_t* data, size_t data_size, const char* metadata, size_t metadata_size) {
-	struct cgoWebpSetICCPReturn t;
-	t.ptr = webpSetICCP(data, data_size, metadata, metadata_size, &t.size);
-	t.ok = (t.size != 0)? 1: 0;
-	return t;
-}
-struct cgoWebpSetXMPReturn {
-	int ok;
-	size_t size;
-	uint8_t* ptr;
-} cgoWebpSetXMP(const uint8_t* data, size_t data_size, const char* metadata, size_t metadata_size) {
-	struct cgoWebpSetXMPReturn t;
-	t.ptr = webpSetXMP(data, data_size, metadata, metadata_size, &t.size);
-	t.ok = (t.size != 0)? 1: 0;
-	return t;
-}
-
 struct cgoWebpDelEXIFReturn {
 	int ok;
 	size_t size;
@@ -406,9 +373,6 @@ func webpGetMetadata(data []byte, format string) (metadata []byte, err error) {
 		err = errors.New("webpGetMetadata: bad arguments")
 		return
 	}
-	isCBuf := false
-	cData := cgoSafePtr(data, isCBuf)
-	defer cgoFreePtr(cData, isCBuf)
 
 	switch format {
 	case "EXIF":
@@ -428,22 +392,21 @@ func webpSetEXIF(data, metadata []byte) (newData []byte, err error) {
 		err = errors.New("webpSetEXIF: bad arguments")
 		return
 	}
-	isCBuf := false
-	cData := cgoSafePtr(data, isCBuf)
-	defer cgoFreePtr(cData, isCBuf)
-	cMetadata := cgoSafePtr(metadata, isCBuf)
-	defer cgoFreePtr(cMetadata, isCBuf)
 
-	rv := C.cgoWebpSetEXIF(
-		(*C.uint8_t)(cData), C.size_t(len(data)),
-		(*C.char)(cMetadata), C.size_t(len(metadata)),
+	var cptr_size C.size_t
+	var cptr = C.webpSetEXIF(
+		(*C.uint8_t)(unsafe.Pointer(&data[0])), C.size_t(len(data)),
+		(*C.char)(unsafe.Pointer(&metadata[0])), C.size_t(len(metadata)),
+		&cptr_size,
 	)
-	if rv.ok != 1 {
+	if cptr == nil || cptr_size == 0 {
 		err = errors.New("webpSetEXIF: failed")
 		return
 	}
-	newData = C.GoBytes(unsafe.Pointer(rv.ptr), C.int(rv.size))
-	C.webpFree(unsafe.Pointer(rv.ptr))
+	defer C.free(unsafe.Pointer(cptr))
+
+	newData = make([]byte, int(cptr_size))
+	copy(newData, ((*[1 << 30]byte)(unsafe.Pointer(cptr)))[0:len(newData):len(newData)])
 	return
 }
 func webpSetICCP(data, metadata []byte) (newData []byte, err error) {
@@ -451,22 +414,21 @@ func webpSetICCP(data, metadata []byte) (newData []byte, err error) {
 		err = errors.New("webpSetICCP: bad arguments")
 		return
 	}
-	isCBuf := false
-	cData := cgoSafePtr(data, isCBuf)
-	defer cgoFreePtr(cData, isCBuf)
-	cMetadata := cgoSafePtr(metadata, isCBuf)
-	defer cgoFreePtr(cMetadata, isCBuf)
 
-	rv := C.cgoWebpSetICCP(
-		(*C.uint8_t)(cData), C.size_t(len(data)),
-		(*C.char)(cMetadata), C.size_t(len(metadata)),
+	var cptr_size C.size_t
+	var cptr = C.webpSetICCP(
+		(*C.uint8_t)(unsafe.Pointer(&data[0])), C.size_t(len(data)),
+		(*C.char)(unsafe.Pointer(&metadata[0])), C.size_t(len(metadata)),
+		&cptr_size,
 	)
-	if rv.ok != 1 {
+	if cptr == nil || cptr_size == 0 {
 		err = errors.New("webpSetICCP: failed")
 		return
 	}
-	newData = C.GoBytes(unsafe.Pointer(rv.ptr), C.int(rv.size))
-	C.webpFree(unsafe.Pointer(rv.ptr))
+	defer C.free(unsafe.Pointer(cptr))
+
+	newData = make([]byte, int(cptr_size))
+	copy(newData, ((*[1 << 30]byte)(unsafe.Pointer(cptr)))[0:len(newData):len(newData)])
 	return
 }
 func webpSetXMP(data, metadata []byte) (newData []byte, err error) {
@@ -474,22 +436,21 @@ func webpSetXMP(data, metadata []byte) (newData []byte, err error) {
 		err = errors.New("webpSetXMP: bad arguments")
 		return
 	}
-	isCBuf := false
-	cData := cgoSafePtr(data, isCBuf)
-	defer cgoFreePtr(cData, isCBuf)
-	cMetadata := cgoSafePtr(metadata, isCBuf)
-	defer cgoFreePtr(cMetadata, isCBuf)
 
-	rv := C.cgoWebpSetXMP(
-		(*C.uint8_t)(cData), C.size_t(len(data)),
-		(*C.char)(cMetadata), C.size_t(len(metadata)),
+	var cptr_size C.size_t
+	var cptr = C.webpSetXMP(
+		(*C.uint8_t)(unsafe.Pointer(&data[0])), C.size_t(len(data)),
+		(*C.char)(unsafe.Pointer(&metadata[0])), C.size_t(len(metadata)),
+		&cptr_size,
 	)
-	if rv.ok != 1 {
+	if cptr == nil || cptr_size == 0 {
 		err = errors.New("webpSetXMP: failed")
 		return
 	}
-	newData = C.GoBytes(unsafe.Pointer(rv.ptr), C.int(rv.size))
-	C.webpFree(unsafe.Pointer(rv.ptr))
+	defer C.free(unsafe.Pointer(cptr))
+
+	newData = make([]byte, int(cptr_size))
+	copy(newData, ((*[1 << 30]byte)(unsafe.Pointer(cptr)))[0:len(newData):len(newData)])
 	return
 }
 func webpSetMetadata(data, metadata []byte, format string) (newData []byte, err error) {
@@ -497,49 +458,14 @@ func webpSetMetadata(data, metadata []byte, format string) (newData []byte, err 
 		err = errors.New("webpSetMetadata: bad arguments")
 		return
 	}
-	isCBuf := false
-	cData := cgoSafePtr(data, isCBuf)
-	defer cgoFreePtr(cData, isCBuf)
-	cMetadata := cgoSafePtr(metadata, isCBuf)
-	defer cgoFreePtr(cMetadata, isCBuf)
 
 	switch format {
 	case "EXIF":
-		rv := C.cgoWebpSetEXIF(
-			(*C.uint8_t)(cData), C.size_t(len(data)),
-			(*C.char)(cMetadata), C.size_t(len(metadata)),
-		)
-		if rv.ok != 1 {
-			err = errors.New("webpSetMetadata: failed")
-			return
-		}
-		newData = C.GoBytes(unsafe.Pointer(rv.ptr), C.int(rv.size))
-		C.webpFree(unsafe.Pointer(rv.ptr))
-		return
+		return webpSetEXIF(data, metadata)
 	case "ICCP":
-		rv := C.cgoWebpSetICCP(
-			(*C.uint8_t)(cData), C.size_t(len(data)),
-			(*C.char)(cMetadata), C.size_t(len(metadata)),
-		)
-		if rv.ok != 1 {
-			err = errors.New("webpSetMetadata: failed")
-			return
-		}
-		newData = C.GoBytes(unsafe.Pointer(rv.ptr), C.int(rv.size))
-		C.webpFree(unsafe.Pointer(rv.ptr))
-		return
+		return webpSetICCP(data, metadata)
 	case "XMP":
-		rv := C.cgoWebpSetXMP(
-			(*C.uint8_t)(cData), C.size_t(len(data)),
-			(*C.char)(cMetadata), C.size_t(len(metadata)),
-		)
-		if rv.ok != 1 {
-			err = errors.New("webpSetMetadata: failed")
-			return
-		}
-		newData = C.GoBytes(unsafe.Pointer(rv.ptr), C.int(rv.size))
-		C.webpFree(unsafe.Pointer(rv.ptr))
-		return
+		return webpSetXMP(data, metadata)
 	default:
 		err = errors.New("webpSetMetadata: unknown format")
 		return

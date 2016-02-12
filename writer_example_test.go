@@ -22,33 +22,6 @@ func ExampleSave() {
 	}
 }
 
-func ExampleSave_cbuf() {
-	tmpname := "z_test_ExampleSave.webp"
-	defer os.Remove(tmpname)
-
-	b := image.Rect(0, 0, 400, 300)
-	cbuf := NewCBuffer(b.Dx() * b.Dy() * 4)
-	defer cbuf.Close()
-
-	rgba := &image.RGBA{
-		Pix:    cbuf.CData(),
-		Stride: b.Dx() * 4,
-		Rect:   b,
-	}
-	if err := Save(tmpname, rgba, nil, cbuf); err != nil {
-		log.Fatal(err)
-	}
-
-	gray := &image.Gray{
-		Pix:    cbuf.CData(),
-		Stride: b.Dx() * 1,
-		Rect:   b,
-	}
-	if err := Save(tmpname, gray, nil, cbuf); err != nil {
-		log.Fatal(err)
-	}
-}
-
 func ExampleEncode() {
 	m, err := Load("./testdata/1_webp_ll.webp")
 	if err != nil {

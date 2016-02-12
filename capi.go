@@ -26,61 +26,6 @@ package webp
 #include <stdlib.h>
 #include <string.h>
 
-struct cgoWebpEncodeRGBReturn {
-	int ok;
-	size_t size;
-	uint8_t* ptr;
-} cgoWebpEncodeRGB(const uint8_t* data, int width, int height, int stride, float quality_factor) {
-	struct cgoWebpEncodeRGBReturn t;
-	t.size = webpEncodeRGB(data, width, height, stride, quality_factor, &t.ptr);
-	t.ok = (t.size != 0)? 1: 0;
-	return t;
-}
-
-struct cgoWebpEncodeRGBAReturn {
-	int ok;
-	size_t size;
-	uint8_t* ptr;
-} cgoWebpEncodeRGBA(const uint8_t* data, int width, int height, int stride, float quality_factor) {
-	struct cgoWebpEncodeRGBAReturn t;
-	t.size = webpEncodeRGBA(data, width, height, stride, quality_factor, &t.ptr);
-	t.ok = (t.size != 0)? 1: 0;
-	return t;
-}
-
-struct cgoWebpEncodeLosslessGrayReturn {
-	int ok;
-	size_t size;
-	uint8_t* ptr;
-} cgoWebpEncodeLosslessGray(const uint8_t* data, int width, int height, int stride) {
-	struct cgoWebpEncodeLosslessGrayReturn t;
-	t.size = webpEncodeLosslessGray(data, width, height, stride, &t.ptr);
-	t.ok = (t.size != 0)? 1: 0;
-	return t;
-}
-
-struct cgoWebpEncodeLosslessRGBReturn {
-	int ok;
-	size_t size;
-	uint8_t* ptr;
-} cgoWebpEncodeLosslessRGB(const uint8_t* data, int width, int height, int stride) {
-	struct cgoWebpEncodeLosslessRGBReturn t;
-	t.size = webpEncodeLosslessRGB(data, width, height, stride, &t.ptr);
-	t.ok = (t.size != 0)? 1: 0;
-	return t;
-}
-
-struct cgoWebpEncodeLosslessRGBAReturn {
-	int ok;
-	size_t size;
-	uint8_t* ptr;
-} cgoWebpEncodeLosslessRGBA(const uint8_t* data, int width, int height, int stride) {
-	struct cgoWebpEncodeLosslessRGBAReturn t;
-	t.size = webpEncodeLosslessRGBA(data, width, height, stride, &t.ptr);
-	t.ok = (t.size != 0)? 1: 0;
-	return t;
-}
-
 struct cgoWebpGetEXIFReturn {
 	int ok;
 	size_t size;
@@ -276,18 +221,18 @@ func webpEncodeGray(pix []byte, width, height, stride int, quality float32) (out
 		C.int(stride), C.float(quality),
 		&cptr_size,
 	)
-	if cptr == nil {
+	if cptr == nil || cptr_size == 0 {
 		err = errors.New("webpEncodeGray: failed")
 		return
 	}
 	defer C.free(unsafe.Pointer(cptr))
 
 	output = make([]byte, int(cptr_size))
-	copy(pix, ((*[1 << 30]byte)(unsafe.Pointer(cptr)))[0:len(output):len(output)])
+	copy(output, ((*[1 << 30]byte)(unsafe.Pointer(cptr)))[0:len(output):len(output)])
 	return
 }
 
-func webpEncodeRGB(pix []byte, width, height, stride int, quality float32, cbuf CBuffer) (output CBuffer, err error) {
+func webpEncodeRGB(pix []byte, width, height, stride int, quality float32) (output []byte, err error) {
 	if len(pix) == 0 || width <= 0 || height <= 0 || stride <= 0 || quality < 0.0 {
 		err = errors.New("webpEncodeRGB: bad arguments")
 		return
@@ -296,24 +241,25 @@ func webpEncodeRGB(pix []byte, width, height, stride int, quality float32, cbuf 
 		err = errors.New("webpEncodeRGB: bad arguments")
 		return
 	}
-	isCBuf := cbuf.Own(pix)
-	cPix := cgoSafePtr(pix, isCBuf)
-	defer cgoFreePtr(cPix, isCBuf)
 
-	rv := C.cgoWebpEncodeRGB(
-		(*C.uint8_t)(cPix), C.int(width), C.int(height),
+	var cptr_size C.size_t
+	var cptr = C.webpEncodeRGB(
+		(*C.uint8_t)(unsafe.Pointer(&pix[0])), C.int(width), C.int(height),
 		C.int(stride), C.float(quality),
+		&cptr_size,
 	)
-	if rv.ok != 1 {
+	if cptr == nil || cptr_size == 0 {
 		err = errors.New("webpEncodeRGB: failed")
 		return
 	}
+	defer C.free(unsafe.Pointer(cptr))
 
-	output = newCBufferFrom(unsafe.Pointer(rv.ptr), int(rv.size))
+	output = make([]byte, int(cptr_size))
+	copy(output, ((*[1 << 30]byte)(unsafe.Pointer(cptr)))[0:len(output):len(output)])
 	return
 }
 
-func webpEncodeRGBA(pix []byte, width, height, stride int, quality float32, cbuf CBuffer) (output CBuffer, err error) {
+func webpEncodeRGBA(pix []byte, width, height, stride int, quality float32) (output []byte, err error) {
 	if len(pix) == 0 || width <= 0 || height <= 0 || stride <= 0 || quality < 0.0 {
 		err = errors.New("webpEncodeRGBA: bad arguments")
 		return
@@ -322,24 +268,25 @@ func webpEncodeRGBA(pix []byte, width, height, stride int, quality float32, cbuf
 		err = errors.New("webpEncodeRGBA: bad arguments")
 		return
 	}
-	isCBuf := cbuf.Own(pix)
-	cPix := cgoSafePtr(pix, isCBuf)
-	defer cgoFreePtr(cPix, isCBuf)
 
-	rv := C.cgoWebpEncodeRGBA(
-		(*C.uint8_t)(cPix), C.int(width), C.int(height),
+	var cptr_size C.size_t
+	var cptr = C.webpEncodeRGBA(
+		(*C.uint8_t)(unsafe.Pointer(&pix[0])), C.int(width), C.int(height),
 		C.int(stride), C.float(quality),
+		&cptr_size,
 	)
-	if rv.ok != 1 {
+	if cptr == nil || cptr_size == 0 {
 		err = errors.New("webpEncodeRGBA: failed")
 		return
 	}
+	defer C.free(unsafe.Pointer(cptr))
 
-	output = newCBufferFrom(unsafe.Pointer(rv.ptr), int(rv.size))
+	output = make([]byte, int(cptr_size))
+	copy(output, ((*[1 << 30]byte)(unsafe.Pointer(cptr)))[0:len(output):len(output)])
 	return
 }
 
-func webpEncodeLosslessGray(pix []byte, width, height, stride int, cbuf CBuffer) (output CBuffer, err error) {
+func webpEncodeLosslessGray(pix []byte, width, height, stride int) (output []byte, err error) {
 	if len(pix) == 0 || width <= 0 || height <= 0 || stride <= 0 {
 		err = errors.New("webpEncodeLosslessGray: bad arguments")
 		return
@@ -348,24 +295,25 @@ func webpEncodeLosslessGray(pix []byte, width, height, stride int, cbuf CBuffer)
 		err = errors.New("webpEncodeLosslessGray: bad arguments")
 		return
 	}
-	isCBuf := cbuf.Own(pix)
-	cPix := cgoSafePtr(pix, isCBuf)
-	defer cgoFreePtr(cPix, isCBuf)
 
-	rv := C.cgoWebpEncodeLosslessGray(
-		(*C.uint8_t)(cPix), C.int(width), C.int(height),
+	var cptr_size C.size_t
+	var cptr = C.webpEncodeLosslessGray(
+		(*C.uint8_t)(unsafe.Pointer(&pix[0])), C.int(width), C.int(height),
 		C.int(stride),
+		&cptr_size,
 	)
-	if rv.ok != 1 {
+	if cptr == nil || cptr_size == 0 {
 		err = errors.New("webpEncodeLosslessGray: failed")
 		return
 	}
+	defer C.free(unsafe.Pointer(cptr))
 
-	output = newCBufferFrom(unsafe.Pointer(rv.ptr), int(rv.size))
+	output = make([]byte, int(cptr_size))
+	copy(output, ((*[1 << 30]byte)(unsafe.Pointer(cptr)))[0:len(output):len(output)])
 	return
 }
 
-func webpEncodeLosslessRGB(pix []byte, width, height, stride int, cbuf CBuffer) (output CBuffer, err error) {
+func webpEncodeLosslessRGB(pix []byte, width, height, stride int) (output []byte, err error) {
 	if len(pix) == 0 || width <= 0 || height <= 0 || stride <= 0 {
 		err = errors.New("webpEncodeLosslessRGB: bad arguments")
 		return
@@ -374,24 +322,25 @@ func webpEncodeLosslessRGB(pix []byte, width, height, stride int, cbuf CBuffer) 
 		err = errors.New("webpEncodeLosslessRGB: bad arguments")
 		return
 	}
-	isCBuf := cbuf.Own(pix)
-	cPix := cgoSafePtr(pix, isCBuf)
-	defer cgoFreePtr(cPix, isCBuf)
 
-	rv := C.cgoWebpEncodeLosslessRGB(
-		(*C.uint8_t)(cPix), C.int(width), C.int(height),
+	var cptr_size C.size_t
+	var cptr = C.webpEncodeLosslessRGB(
+		(*C.uint8_t)(unsafe.Pointer(&pix[0])), C.int(width), C.int(height),
 		C.int(stride),
+		&cptr_size,
 	)
-	if rv.ok != 1 {
+	if cptr == nil || cptr_size == 0 {
 		err = errors.New("webpEncodeLosslessRGB: failed")
 		return
 	}
+	defer C.free(unsafe.Pointer(cptr))
 
-	output = newCBufferFrom(unsafe.Pointer(rv.ptr), int(rv.size))
+	output = make([]byte, int(cptr_size))
+	copy(output, ((*[1 << 30]byte)(unsafe.Pointer(cptr)))[0:len(output):len(output)])
 	return
 }
 
-func webpEncodeLosslessRGBA(pix []byte, width, height, stride int, cbuf CBuffer) (output CBuffer, err error) {
+func webpEncodeLosslessRGBA(pix []byte, width, height, stride int) (output []byte, err error) {
 	if len(pix) == 0 || width <= 0 || height <= 0 || stride <= 0 {
 		err = errors.New("webpEncodeLosslessRGBA: bad arguments")
 		return
@@ -400,20 +349,21 @@ func webpEncodeLosslessRGBA(pix []byte, width, height, stride int, cbuf CBuffer)
 		err = errors.New("webpEncodeLosslessRGBA: bad arguments")
 		return
 	}
-	isCBuf := cbuf.Own(pix)
-	cPix := cgoSafePtr(pix, isCBuf)
-	defer cgoFreePtr(cPix, isCBuf)
 
-	rv := C.cgoWebpEncodeLosslessRGBA(
-		(*C.uint8_t)(cPix), C.int(width), C.int(height),
+	var cptr_size C.size_t
+	var cptr = C.webpEncodeLosslessRGBA(
+		(*C.uint8_t)(unsafe.Pointer(&pix[0])), C.int(width), C.int(height),
 		C.int(stride),
+		&cptr_size,
 	)
-	if rv.ok != 1 {
+	if cptr == nil || cptr_size == 0 {
 		err = errors.New("webpEncodeLosslessRGBA: failed")
 		return
 	}
+	defer C.free(unsafe.Pointer(cptr))
 
-	output = newCBufferFrom(unsafe.Pointer(rv.ptr), int(rv.size))
+	output = make([]byte, int(cptr_size))
+	copy(output, ((*[1 << 30]byte)(unsafe.Pointer(cptr)))[0:len(output):len(output)])
 	return
 }
 

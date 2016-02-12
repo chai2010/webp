@@ -26,38 +26,35 @@ type colorModeler interface {
 	ColorModel() color.Model
 }
 
-func Save(name string, m image.Image, opt *Options, cbuf ...CBuffer) (err error) {
+func Save(name string, m image.Image, opt *Options) (err error) {
 	f, err := os.Create(name)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	if len(cbuf) > 0 && cbuf[0] != nil {
-		return encode(f, m, opt, cbuf[0])
-	} else {
-		return encode(f, m, opt, nil)
-	}
+
+	return encode(f, m, opt)
 }
 
 // Encode writes the image m to w in WEBP format.
 func Encode(w io.Writer, m image.Image, opt *Options) (err error) {
-	return encode(w, m, opt, nil)
+	return encode(w, m, opt)
 }
 
-func encode(w io.Writer, m image.Image, opt *Options, cbuf CBuffer) (err error) {
-	var output CBuffer
+func encode(w io.Writer, m image.Image, opt *Options) (err error) {
+	var output []byte
 	if opt != nil && opt.Lossless {
 		switch m := adjustImage(m).(type) {
 		case *image.Gray:
-			if output, err = EncodeLosslessGrayEx(m, cbuf); err != nil {
+			if output, err = EncodeLosslessGray(m); err != nil {
 				return
 			}
 		case *RGBImage:
-			if output, err = EncodeLosslessRGBEx(m, cbuf); err != nil {
+			if output, err = EncodeLosslessRGB(m); err != nil {
 				return
 			}
 		case *image.RGBA:
-			if output, err = EncodeLosslessRGBAEx(m, cbuf); err != nil {
+			if output, err = EncodeLosslessRGBA(m); err != nil {
 				return
 			}
 		default:
@@ -70,26 +67,22 @@ func encode(w io.Writer, m image.Image, opt *Options, cbuf CBuffer) (err error) 
 		}
 		switch m := adjustImage(m).(type) {
 		case *image.Gray:
-			var output []byte
 			if output, err = EncodeGray(m, quality); err != nil {
 				return
 			}
-			_, err = w.Write(output)
-			return
 		case *RGBImage:
-			if output, err = EncodeRGBEx(m, quality, cbuf); err != nil {
+			if output, err = EncodeRGB(m, quality); err != nil {
 				return
 			}
 		case *image.RGBA:
-			if output, err = EncodeRGBAEx(m, quality, cbuf); err != nil {
+			if output, err = EncodeRGBA(m, quality); err != nil {
 				return
 			}
 		default:
 			panic("image/webp: Encode, unreachable!")
 		}
 	}
-	_, err = w.Write(output.CData())
-	output.Close()
+	_, err = w.Write(output)
 	return
 }
 

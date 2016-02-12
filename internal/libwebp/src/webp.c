@@ -114,25 +114,29 @@ uint8_t* webpEncodeGray(
 	return output;
 }
 
-size_t webpEncodeRGB(
+uint8_t* webpEncodeRGB(
 	const uint8_t* rgb, int width, int height, int stride, float quality_factor,
-	uint8_t** output
+	size_t* output_size
 ) {
-	return WebPEncodeRGB(rgb, width, height, stride, quality_factor, output);
+	uint8_t* output = NULL;
+	*output_size = WebPEncodeRGB(rgb, width, height, stride, quality_factor, &output);
+	return output;
 }
 
-size_t webpEncodeRGBA(
+uint8_t* webpEncodeRGBA(
 	const uint8_t* rgba, int width, int height, int stride, float quality_factor,
-	uint8_t** output
+	size_t* output_size
 ) {
-	return WebPEncodeRGBA(rgba, width, height, stride, quality_factor, output);
+	uint8_t* output = NULL;
+	*output_size = WebPEncodeRGBA(rgba, width, height, stride, quality_factor, &output);
+	return output;
 }
 
-size_t webpEncodeLosslessGray(
+uint8_t* webpEncodeLosslessGray(
 	const uint8_t* gray, int width, int height, int stride,
-	uint8_t** output
+	size_t* output_size
 ) {
-	size_t output_size;
+	uint8_t* output;
 	uint8_t* rgb;
 	int x, y;
 
@@ -150,23 +154,27 @@ size_t webpEncodeLosslessGray(
 		}
 	}
 
-	output_size = WebPEncodeLosslessRGB(rgb, width, height, width*3, output);
+	*output_size = WebPEncodeLosslessRGB(rgb, width, height, width*3, &output);
 	free(rgb);
-	return output_size;
+	return output;
 }
 
-size_t webpEncodeLosslessRGB(
+uint8_t* webpEncodeLosslessRGB(
 	const uint8_t* rgb, int width, int height, int stride,
-	uint8_t** output
+	size_t* output_size
 ) {
-	return WebPEncodeLosslessRGB(rgb, width, height, stride, output);
+	uint8_t* output = NULL;
+	*output_size = WebPEncodeLosslessRGB(rgb, width, height, stride, &output);
+	return output;
 }
 
-size_t webpEncodeLosslessRGBA(
+uint8_t* webpEncodeLosslessRGBA(
 	const uint8_t* rgba, int width, int height, int stride,
-	uint8_t** output
+	size_t* output_size
 ) {
-	return WebPEncodeLosslessRGBA(rgba, width, height, stride, output);
+	uint8_t* output = NULL;
+	*output_size = WebPEncodeLosslessRGBA(rgba, width, height, stride, &output);
+	return output;
 }
 
 char* webpGetEXIF(const uint8_t* data, size_t data_size, size_t* metadata_size) {

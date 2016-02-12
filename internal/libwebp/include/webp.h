@@ -35,26 +35,26 @@ uint8_t* webpEncodeGray(
 	const uint8_t* gray, int width, int height, int stride, float quality_factor,
 	size_t* output_size
 );
-size_t webpEncodeRGB(
+uint8_t* webpEncodeRGB(
 	const uint8_t* rgb, int width, int height, int stride, float quality_factor,
-	uint8_t** output
+	size_t* output_size
 );
-size_t webpEncodeRGBA(
+uint8_t* webpEncodeRGBA(
 	const uint8_t* rgba, int width, int height, int stride, float quality_factor,
-	uint8_t** output
+	size_t* output_size
 );
 
-size_t webpEncodeLosslessGray(
+uint8_t* webpEncodeLosslessGray(
 	const uint8_t* gray, int width, int height, int stride,
-	uint8_t** output
+	size_t* output_size
 );
-size_t webpEncodeLosslessRGB(
+uint8_t* webpEncodeLosslessRGB(
 	const uint8_t* rgb, int width, int height, int stride,
-	uint8_t** output
+	size_t* output_size
 );
-size_t webpEncodeLosslessRGBA(
+uint8_t* webpEncodeLosslessRGBA(
 	const uint8_t* rgba, int width, int height, int stride,
-	uint8_t** output
+	size_t* output_size
 );
 
 char* webpGetEXIF(const uint8_t* data, size_t data_size, size_t* metadata_size);

@@ -71,116 +71,31 @@ func EncodeGray(m image.Image, quality float32) (data []byte, err error) {
 
 func EncodeRGB(m image.Image, quality float32) (data []byte, err error) {
 	p := NewRGBImageFrom(m)
-	cbuf, err := webpEncodeRGB(p.XPix, p.XRect.Dx(), p.XRect.Dy(), p.XStride, quality, nilCBuffer)
-	if err != nil {
-		return
-	}
-	data = append([]byte{}, cbuf.CData()...)
-	cbuf.Close()
-	return
-}
-
-func EncodeRGBEx(m image.Image, quality float32, cbuf CBuffer) (data CBuffer, err error) {
-	if cbuf == nil {
-		cbuf = nilCBuffer
-	}
-	p := NewRGBImageFrom(m)
-	data, err = webpEncodeRGB(p.XPix, p.XRect.Dx(), p.XRect.Dy(), p.XStride, quality, cbuf)
-	if err != nil {
-		return
-	}
+	data, err = webpEncodeRGB(p.XPix, p.XRect.Dx(), p.XRect.Dy(), p.XStride, quality)
 	return
 }
 
 func EncodeRGBA(m image.Image, quality float32) (data []byte, err error) {
 	p := toRGBAImage(m)
-	cbuf, err := webpEncodeRGBA(p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride, quality, nilCBuffer)
-	if err != nil {
-		return
-	}
-	data = append([]byte{}, cbuf.CData()...)
-	cbuf.Close()
-	return
-}
-
-func EncodeRGBAEx(m image.Image, quality float32, cbuf CBuffer) (data CBuffer, err error) {
-	if cbuf == nil {
-		cbuf = nilCBuffer
-	}
-	p := toRGBAImage(m)
-	data, err = webpEncodeRGBA(p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride, quality, cbuf)
-	if err != nil {
-		return
-	}
+	data, err = webpEncodeRGBA(p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride, quality)
 	return
 }
 
 func EncodeLosslessGray(m image.Image) (data []byte, err error) {
 	p := toGrayImage(m)
-	cbuf, err := webpEncodeLosslessGray(p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride, nilCBuffer)
-	if err != nil {
-		return
-	}
-	data = append([]byte{}, cbuf.CData()...)
-	cbuf.Close()
-	return
-}
-
-func EncodeLosslessGrayEx(m image.Image, cbuf CBuffer) (data CBuffer, err error) {
-	if cbuf == nil {
-		cbuf = nilCBuffer
-	}
-	p := toGrayImage(m)
-	data, err = webpEncodeLosslessGray(p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride, cbuf)
-	if err != nil {
-		return
-	}
+	data, err = webpEncodeLosslessGray(p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride)
 	return
 }
 
 func EncodeLosslessRGB(m image.Image) (data []byte, err error) {
 	p := NewRGBImageFrom(m)
-	cbuf, err := webpEncodeLosslessRGB(p.XPix, p.XRect.Dx(), p.XRect.Dy(), p.XStride, nilCBuffer)
-	if err != nil {
-		return
-	}
-	data = append([]byte{}, cbuf.CData()...)
-	cbuf.Close()
-	return
-}
-
-func EncodeLosslessRGBEx(m image.Image, cbuf CBuffer) (data CBuffer, err error) {
-	if cbuf == nil {
-		cbuf = nilCBuffer
-	}
-	p := NewRGBImageFrom(m)
-	data, err = webpEncodeLosslessRGB(p.XPix, p.XRect.Dx(), p.XRect.Dy(), p.XStride, cbuf)
-	if err != nil {
-		return
-	}
+	data, err = webpEncodeLosslessRGB(p.XPix, p.XRect.Dx(), p.XRect.Dy(), p.XStride)
 	return
 }
 
 func EncodeLosslessRGBA(m image.Image) (data []byte, err error) {
 	p := toRGBAImage(m)
-	cbuf, err := webpEncodeLosslessRGBA(p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride, nilCBuffer)
-	if err != nil {
-		return
-	}
-	data = append([]byte{}, cbuf.CData()...)
-	cbuf.Close()
-	return
-}
-
-func EncodeLosslessRGBAEx(m image.Image, cbuf CBuffer) (data CBuffer, err error) {
-	if cbuf == nil {
-		cbuf = nilCBuffer
-	}
-	p := toRGBAImage(m)
-	data, err = webpEncodeLosslessRGBA(p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride, cbuf)
-	if err != nil {
-		return
-	}
+	data, err = webpEncodeLosslessRGBA(p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride)
 	return
 }
 

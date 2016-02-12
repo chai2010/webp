@@ -24,39 +24,6 @@ package webp
 #include <webp/decode.h>
 
 #include <stdlib.h>
-#include <string.h>
-
-struct cgoWebpDelEXIFReturn {
-	int ok;
-	size_t size;
-	uint8_t* ptr;
-} cgoWebpDelEXIF(const uint8_t* data, size_t data_size) {
-	struct cgoWebpDelEXIFReturn t;
-	t.ptr = webpDelEXIF(data, data_size, &t.size);
-	t.ok = (t.size != 0)? 1: 0;
-	return t;
-}
-struct cgoWebpDelICCPReturn {
-	int ok;
-	size_t size;
-	uint8_t* ptr;
-} cgoWebpDelICCP(const uint8_t* data, size_t data_size) {
-	struct cgoWebpDelICCPReturn t;
-	t.ptr = webpDelICCP(data, data_size, &t.size);
-	t.ok = (t.size != 0)? 1: 0;
-	return t;
-}
-struct cgoWebpDelXMPReturn {
-	int ok;
-	size_t size;
-	uint8_t* ptr;
-} cgoWebpDelXMP(const uint8_t* data, size_t data_size) {
-	struct cgoWebpDelXMPReturn t;
-	t.ptr = webpDelXMP(data, data_size, &t.size);
-	t.ok = (t.size != 0)? 1: 0;
-	return t;
-}
-
 */
 import "C"
 import (
@@ -477,19 +444,20 @@ func webpDelEXIF(data []byte) (newData []byte, err error) {
 		err = errors.New("webpDelEXIF: bad arguments")
 		return
 	}
-	isCBuf := false
-	cData := cgoSafePtr(data, isCBuf)
-	defer cgoFreePtr(cData, isCBuf)
 
-	rv := C.cgoWebpDelEXIF(
-		(*C.uint8_t)(cData), C.size_t(len(data)),
+	var cptr_size C.size_t
+	var cptr = C.webpDelEXIF(
+		(*C.uint8_t)(unsafe.Pointer(&data[0])), C.size_t(len(data)),
+		&cptr_size,
 	)
-	if rv.ok != 1 {
+	if cptr == nil || cptr_size == 0 {
 		err = errors.New("webpDelEXIF: failed")
 		return
 	}
-	newData = C.GoBytes(unsafe.Pointer(rv.ptr), C.int(rv.size))
-	C.webpFree(unsafe.Pointer(rv.ptr))
+	defer C.free(unsafe.Pointer(cptr))
+
+	newData = make([]byte, int(cptr_size))
+	copy(newData, ((*[1 << 30]byte)(unsafe.Pointer(cptr)))[0:len(newData):len(newData)])
 	return
 }
 func webpDelICCP(data []byte) (newData []byte, err error) {
@@ -497,19 +465,20 @@ func webpDelICCP(data []byte) (newData []byte, err error) {
 		err = errors.New("webpDelICCP: bad arguments")
 		return
 	}
-	isCBuf := false
-	cData := cgoSafePtr(data, isCBuf)
-	defer cgoFreePtr(cData, isCBuf)
 
-	rv := C.cgoWebpDelICCP(
-		(*C.uint8_t)(cData), C.size_t(len(data)),
+	var cptr_size C.size_t
+	var cptr = C.webpDelICCP(
+		(*C.uint8_t)(unsafe.Pointer(&data[0])), C.size_t(len(data)),
+		&cptr_size,
 	)
-	if rv.ok != 1 {
+	if cptr == nil || cptr_size == 0 {
 		err = errors.New("webpDelICCP: failed")
 		return
 	}
-	newData = C.GoBytes(unsafe.Pointer(rv.ptr), C.int(rv.size))
-	C.webpFree(unsafe.Pointer(rv.ptr))
+	defer C.free(unsafe.Pointer(cptr))
+
+	newData = make([]byte, int(cptr_size))
+	copy(newData, ((*[1 << 30]byte)(unsafe.Pointer(cptr)))[0:len(newData):len(newData)])
 	return
 }
 func webpDelXMP(data []byte) (newData []byte, err error) {
@@ -517,18 +486,19 @@ func webpDelXMP(data []byte) (newData []byte, err error) {
 		err = errors.New("webpDelXMP: bad arguments")
 		return
 	}
-	isCBuf := false
-	cData := cgoSafePtr(data, isCBuf)
-	defer cgoFreePtr(cData, isCBuf)
 
-	rv := C.cgoWebpDelXMP(
-		(*C.uint8_t)(cData), C.size_t(len(data)),
+	var cptr_size C.size_t
+	var cptr = C.webpDelXMP(
+		(*C.uint8_t)(unsafe.Pointer(&data[0])), C.size_t(len(data)),
+		&cptr_size,
 	)
-	if rv.ok != 1 {
+	if cptr == nil || cptr_size == 0 {
 		err = errors.New("webpDelXMP: failed")
 		return
 	}
-	newData = C.GoBytes(unsafe.Pointer(rv.ptr), C.int(rv.size))
-	C.webpFree(unsafe.Pointer(rv.ptr))
+	defer C.free(unsafe.Pointer(cptr))
+
+	newData = make([]byte, int(cptr_size))
+	copy(newData, ((*[1 << 30]byte)(unsafe.Pointer(cptr)))[0:len(newData):len(newData)])
 	return
 }

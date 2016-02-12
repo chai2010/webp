@@ -3,9 +3,7 @@
 // license that can be found in the LICENSE file.
 
 //
-// TODO(chai2010): simplify cgo pointer:
-//
-// CBuffer/cgoSafePtr/cgoFreePtr removed!
+// cgo pointer:
 //
 // Go1.3: Changes to the garbage collector
 // http://golang.org/doc/go1.3#garbage_collector

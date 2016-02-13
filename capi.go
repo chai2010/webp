@@ -18,7 +18,8 @@ package webp
 #cgo CFLAGS: -I./internal/libwebp/include  -I./internal/libwebp/src -Wno-pointer-sign -DWEBP_USE_THREAD
 #cgo !windows LDFLAGS: -lm
 
-#include <webp.h>
+#include "./capi.h"
+
 #include <webp/decode.h>
 
 #include <stdlib.h>

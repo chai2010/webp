@@ -140,9 +140,6 @@ set(WEBP_UTILS_ENC_SRC
 )
 
 set(WEBP_SRC
-  ./include/webp.h
-  ./src/webp.c
-
   ${WEBP_DEC_SRC}
   ${WEBP_DEMUX_SRC}
   ${WEBP_DSP_DEC_SRC}
@@ -156,6 +153,9 @@ set(WEBP_SRC
 #------------------------------------------------------------------------------
 
 add_library(webplib STATIC
+  ./include/webp.h
+  ./src/webp.c
+
   ${WEBP_SRC}
 )
 if(CMAKE_BUILD_TYPE STREQUAL "debug")
@@ -185,6 +185,9 @@ include_directories(AFTER
 add_executable(webpapp
   ./demo/demo.cc
 
+  ./include/webp.h
+  ./src/webp.c
+
   ${WEBP_SRC}
 )
 install(TARGETS webpapp
@@ -208,6 +211,9 @@ add_executable(webptest
   #./test/webp_test.cc
   #./test/webp_bench_test.cc
 
+  ./include/webp.h
+  ./src/webp.c
+
   ${WEBP_SRC}
 )
 
@@ -218,4 +224,3 @@ install(TARGETS webptest
 )
 
 #------------------------------------------------------------------------------
-

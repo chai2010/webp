@@ -7,8 +7,8 @@
 reset
 
 # for windows
-# set encoding utf8
-# set font "simsun.ttc,12"
+set encoding utf8
+set font "simsun.ttc,12"
 
 set terminal png
 

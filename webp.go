@@ -56,6 +56,20 @@ func DecodeRGBA(data []byte) (m *image.RGBA, err error) {
 	return
 }
 
+// DecodeScaled loads a WEBP image from data, scaling it to given dimensions.
+func DecodeScaled(data []byte, width, height int) (m image.Image, err error) {
+	pix, err := webpDecodeScaled(data, width, height)
+	if err != nil {
+		return
+	}
+	m = &image.RGBA{
+		Pix:    pix,
+		Stride: 4 * width,
+		Rect:   image.Rect(0, 0, width, height),
+	}
+	return
+}
+
 func EncodeGray(m image.Image, quality float32) (data []byte, err error) {
 	p := toGrayImage(m)
 	data, err = webpEncodeGray(p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride, quality)

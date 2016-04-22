@@ -109,6 +109,37 @@ func webpDecodeRGBA(data []byte) (pix []byte, width, height int, err error) {
 	return
 }
 
+func webpDecodeScaled(data []byte, width, height int) (pix []byte, err error) {
+	if len(data) == 0 {
+		err = errors.New("webpDecodeScaled: bad arguments")
+		return
+	}
+
+	pix = make([]byte, int(width*height*4))
+
+	var config C.WebPDecoderConfig
+	C.WebPInitDecoderConfig(&config)
+	config.options.bypass_filtering = 1
+	config.options.use_scaling = 1
+	config.options.scaled_width = C.int(width)
+	config.options.scaled_height = C.int(height)
+	config.options.use_threads = 1
+	config.output.colorspace = C.MODE_RGBA
+	config.output.is_external_memory = C.int(1)
+
+	rgba := (*C.WebPRGBABuffer)(unsafe.Pointer(&config.output.u[0]))
+	rgba.rgba = (*C.uint8_t)(unsafe.Pointer(&pix[0]))
+	rgba.stride = C.int(4 * width)
+	rgba.size = C.size_t(len(pix))
+
+	res := C.WebPDecode((*C.uint8_t)(unsafe.Pointer(&data[0])), C.size_t(len(data)), &config)
+	if res != C.VP8_STATUS_OK {
+		err = errors.New("webpDecodeScaled: failed")
+	}
+
+	return
+}
+
 func webpEncodeGray(pix []byte, width, height, stride int, quality float32) (output []byte, err error) {
 	if len(pix) == 0 || width <= 0 || height <= 0 || stride <= 0 || quality < 0.0 {
 		err = errors.New("webpEncodeGray: bad arguments")

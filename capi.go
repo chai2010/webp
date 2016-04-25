@@ -109,34 +109,30 @@ func webpDecodeRGBA(data []byte) (pix []byte, width, height int, err error) {
 	return
 }
 
-func webpDecodeScaled(data []byte, width, height int) (pix []byte, err error) {
-	if len(data) == 0 {
-		err = errors.New("webpDecodeScaled: bad arguments")
-		return
-	}
-
-	pix = make([]byte, int(width*height*4))
-
-	var config C.WebPDecoderConfig
-	C.WebPInitDecoderConfig(&config)
-	config.options.bypass_filtering = 1
-	config.options.use_scaling = 1
-	config.options.scaled_width = C.int(width)
-	config.options.scaled_height = C.int(height)
-	config.options.use_threads = 1
-	config.output.colorspace = C.MODE_RGBA
-	config.output.is_external_memory = C.int(1)
-
-	rgba := (*C.WebPRGBABuffer)(unsafe.Pointer(&config.output.u[0]))
-	rgba.rgba = (*C.uint8_t)(unsafe.Pointer(&pix[0]))
-	rgba.stride = C.int(4 * width)
-	rgba.size = C.size_t(len(pix))
-
-	res := C.WebPDecode((*C.uint8_t)(unsafe.Pointer(&data[0])), C.size_t(len(data)), &config)
+func webpDecodeGrayToSize(data []byte, width, height int) (pix []byte, err error) {
+	pix = make([]byte, int(width*height))
+	res := C.webpDecodeGrayToSize((*C.uint8_t)(unsafe.Pointer(&data[0])), C.size_t(len(data)), C.int(width), C.int(height), (*C.uint8_t)(unsafe.Pointer(&pix[0])), C.size_t(len(pix)))
 	if res != C.VP8_STATUS_OK {
-		err = errors.New("webpDecodeScaled: failed")
+		err = errors.New("webpDecodeGrayToSize: failed")
 	}
+	return
+}
 
+func webpDecodeRGBToSize(data []byte, width, height int) (pix []byte, err error) {
+	pix = make([]byte, int(3*width*height))
+	res := C.webpDecodeRGBToSize((*C.uint8_t)(unsafe.Pointer(&data[0])), C.size_t(len(data)), C.int(width), C.int(height), (*C.uint8_t)(unsafe.Pointer(&pix[0])), C.size_t(len(pix)))
+	if res != C.VP8_STATUS_OK {
+		err = errors.New("webpDecodeRGBToSize: failed")
+	}
+	return
+}
+
+func webpDecodeRGBAToSize(data []byte, width, height int) (pix []byte, err error) {
+	pix = make([]byte, int(4*width*height))
+	res := C.webpDecodeRGBAToSize((*C.uint8_t)(unsafe.Pointer(&data[0])), C.size_t(len(data)), C.int(width), C.int(height), (*C.uint8_t)(unsafe.Pointer(&pix[0])), C.size_t(len(pix)))
+	if res != C.VP8_STATUS_OK {
+		err = errors.New("webpDecodeRGBAToSize: failed")
+	}
 	return
 }
 

@@ -111,8 +111,10 @@ func webpDecodeRGBA(data []byte) (pix []byte, width, height int, err error) {
 
 func webpDecodeGrayToSize(data []byte, width, height int) (pix []byte, err error) {
 	pix = make([]byte, int(width*height))
-	res := C.webpDecodeGrayToSize((*C.uint8_t)(unsafe.Pointer(&data[0])), C.size_t(len(data)), C.int(width), C.int(height), (*C.uint8_t)(unsafe.Pointer(&pix[0])), C.size_t(len(pix)))
+	stride := C.int(width)
+	res := C.webpDecodeGrayToSize((*C.uint8_t)(unsafe.Pointer(&data[0])), C.size_t(len(data)), C.int(width), C.int(height), stride, (*C.uint8_t)(unsafe.Pointer(&pix[0])))
 	if res != C.VP8_STATUS_OK {
+		pix = nil
 		err = errors.New("webpDecodeGrayToSize: failed")
 	}
 	return
@@ -120,8 +122,10 @@ func webpDecodeGrayToSize(data []byte, width, height int) (pix []byte, err error
 
 func webpDecodeRGBToSize(data []byte, width, height int) (pix []byte, err error) {
 	pix = make([]byte, int(3*width*height))
-	res := C.webpDecodeRGBToSize((*C.uint8_t)(unsafe.Pointer(&data[0])), C.size_t(len(data)), C.int(width), C.int(height), (*C.uint8_t)(unsafe.Pointer(&pix[0])), C.size_t(len(pix)))
+	stride := C.int(3 * width)
+	res := C.webpDecodeRGBToSize((*C.uint8_t)(unsafe.Pointer(&data[0])), C.size_t(len(data)), C.int(width), C.int(height), stride, (*C.uint8_t)(unsafe.Pointer(&pix[0])))
 	if res != C.VP8_STATUS_OK {
+		pix = nil
 		err = errors.New("webpDecodeRGBToSize: failed")
 	}
 	return
@@ -129,8 +133,10 @@ func webpDecodeRGBToSize(data []byte, width, height int) (pix []byte, err error)
 
 func webpDecodeRGBAToSize(data []byte, width, height int) (pix []byte, err error) {
 	pix = make([]byte, int(4*width*height))
-	res := C.webpDecodeRGBAToSize((*C.uint8_t)(unsafe.Pointer(&data[0])), C.size_t(len(data)), C.int(width), C.int(height), (*C.uint8_t)(unsafe.Pointer(&pix[0])), C.size_t(len(pix)))
+	stride := C.int(4 * width)
+	res := C.webpDecodeRGBAToSize((*C.uint8_t)(unsafe.Pointer(&data[0])), C.size_t(len(data)), C.int(width), C.int(height), stride, (*C.uint8_t)(unsafe.Pointer(&pix[0])))
 	if res != C.VP8_STATUS_OK {
+		pix = nil
 		err = errors.New("webpDecodeRGBAToSize: failed")
 	}
 	return

@@ -88,13 +88,8 @@ uint8_t* webpDecodeRGBA(
 }
 
 int webpDecodeGrayToSize(const uint8_t* data, size_t data_size,
-	int width, int height,
-	uint8_t* gray, size_t gray_size
+	int width, int height, int outStride, uint8_t* out
 ) {
-	if (gray_size < width * height) {
-		return -1;
-	}
-
 	WebPDecoderConfig config;
 	if(!WebPInitDecoderConfig(&config)) {
 		return -1;
@@ -112,20 +107,15 @@ int webpDecodeGrayToSize(const uint8_t* data, size_t data_size,
 		return status;
 	}
 
-	size_t stride = config.output.u.YUVA.y_stride;
+	int yStride = config.output.u.YUVA.y_stride;
 	uint8_t* src = config.output.u.YUVA.y;
-	uint8_t* dst = gray;
+	uint8_t* dst = out;
 	int i;
 
-	if(stride == width && config.output.u.YUVA.y_size == gray_size) {
-		memcpy(dst, src, gray_size);
-	}
-	else {
-		for(i = 0; i < height; ++i) {
-			memmove(dst, src, width);
-			src += stride;
-			dst += width;
-		}
+	for(i = 0; i < height; ++i) {
+		memmove(dst, src, width);
+		src += yStride;
+		dst += outStride;
 	}
 
 	WebPFreeDecBuffer(&config.output);
@@ -133,8 +123,7 @@ int webpDecodeGrayToSize(const uint8_t* data, size_t data_size,
 }
 
 int webpDecodeRGBToSize(const uint8_t* data, size_t data_size,
-	int width, int height,
-	uint8_t* rgb, size_t rgb_size
+	int width, int height, int outStride, uint8_t* out
 ) {
 	WebPDecoderConfig config;
 	if(!WebPInitDecoderConfig(&config)) {
@@ -147,32 +136,31 @@ int webpDecodeRGBToSize(const uint8_t* data, size_t data_size,
 	config.options.scaled_width = width;
 	config.options.scaled_height = height;
 	config.output.colorspace = MODE_RGB;
-	config.output.u.RGBA.rgba = rgb;
-	config.output.u.RGBA.stride = 3*width;
-	config.output.u.RGBA.size = rgb_size;
+	config.output.u.RGBA.rgba = out;
+	config.output.u.RGBA.stride = outStride;
+	config.output.u.RGBA.size = outStride * height;
 	config.output.is_external_memory = 1;
 
 	return WebPDecode(data, data_size, &config);
 }
 
 int webpDecodeRGBAToSize(const uint8_t* data, size_t data_size,
-	int width, int height,
-	uint8_t* rgba, size_t rgba_size
+	int width, int height, int outStride, uint8_t* out
 ) {
 	WebPDecoderConfig config;
 	if(!WebPInitDecoderConfig(&config)) {
 		return -1;
 	}
-	
+
 	config.options.bypass_filtering = 1;
 	config.options.no_fancy_upsampling = 1;
 	config.options.use_scaling = 1;
 	config.options.scaled_width = width;
 	config.options.scaled_height = height;
 	config.output.colorspace = MODE_RGBA;
-	config.output.u.RGBA.rgba = rgba;
-	config.output.u.RGBA.stride = 4*width;
-	config.output.u.RGBA.size = rgba_size;
+	config.output.u.RGBA.rgba = out;
+	config.output.u.RGBA.stride = outStride;
+	config.output.u.RGBA.size = outStride * height;
 	config.output.is_external_memory = 1;
 
 	return WebPDecode(data, data_size, &config);

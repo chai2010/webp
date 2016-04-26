@@ -70,6 +70,54 @@ func BenchmarkDecodeRGBA(b *testing.B) {
 	b.StopTimer()
 }
 
+func BenchmarkDecodeGrayToSize(b *testing.B) {
+	data, err := ioutil.ReadFile("./testdata/1_webp_ll.webp")
+	if err != nil {
+		b.Fatal(err)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		m, err := DecodeGrayToSize(data, 32, 32)
+		if err != nil {
+			b.Fatal(err)
+		}
+		_ = m
+	}
+	b.StopTimer()
+}
+
+func BenchmarkDecodeRGBToSize(b *testing.B) {
+	data, err := ioutil.ReadFile("./testdata/1_webp_ll.webp")
+	if err != nil {
+		b.Fatal(err)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		m, err := DecodeRGBToSize(data, 32, 32)
+		if err != nil {
+			b.Fatal(err)
+		}
+		_ = m
+	}
+	b.StopTimer()
+}
+
+func BenchmarkDecodeRGBAToSize(b *testing.B) {
+	data, err := ioutil.ReadFile("./testdata/1_webp_ll.webp")
+	if err != nil {
+		b.Fatal(err)
+	}
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		m, err := DecodeRGBAToSize(data, 32, 32)
+		if err != nil {
+			b.Fatal(err)
+		}
+		_ = m
+	}
+	b.StopTimer()
+}
+
 func BenchmarkEncodeAndDecode(b *testing.B) {
 	var buf bytes.Buffer
 

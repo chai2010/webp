@@ -33,16 +33,13 @@ uint8_t* webpDecodeRGBA(
 );
 
 int webpDecodeGrayToSize(const uint8_t* data, size_t data_size,
-	int width, int height,
-	uint8_t* gray, size_t gray_size
+	int width, int height, int outStride, uint8_t* out
 );
 int webpDecodeRGBToSize(const uint8_t* data, size_t data_size,
-	int width, int height,
-	uint8_t* rgb, size_t rgb_size
+	int width, int height, int outStride, uint8_t* out
 );
 int webpDecodeRGBAToSize(const uint8_t* data, size_t data_size,
-	int width, int height,
-	uint8_t* rgba, size_t rgba_size
+	int width, int height, int outStride, uint8_t* out
 );
 
 uint8_t* webpEncodeGray(

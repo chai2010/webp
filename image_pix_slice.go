@@ -9,7 +9,7 @@ import (
 	"unsafe"
 )
 
-type PixSilce []byte
+type PixSlice []byte
 
 // AsPixSilce convert a normal slice to byte slice.
 //
@@ -18,7 +18,7 @@ type PixSilce []byte
 //	x := make([]X, xLen)
 //	y := AsPixSilce(x)
 //
-func AsPixSilce(slice interface{}) (d PixSilce) {
+func AsPixSilce(slice interface{}) (d PixSlice) {
 	sv := reflect.ValueOf(slice)
 	h := (*reflect.SliceHeader)((unsafe.Pointer(&d)))
 	h.Cap = sv.Cap() * int(sv.Type().Elem().Size())
@@ -31,9 +31,9 @@ func AsPixSilce(slice interface{}) (d PixSilce) {
 //
 // Convert []byte to []Y:
 //	x := make([]byte, xLen)
-//	y := PixSilce(x).Slice(reflect.TypeOf([]Y(nil))).([]Y)
+//	y := PixSlice(x).Slice(reflect.TypeOf([]Y(nil))).([]Y)
 //
-func (d PixSilce) Slice(newSliceType reflect.Type) interface{} {
+func (d PixSlice) Slice(newSliceType reflect.Type) interface{} {
 	sv := reflect.ValueOf(d)
 	newSlice := reflect.New(newSliceType)
 	hdr := (*reflect.SliceHeader)(unsafe.Pointer(newSlice.Pointer()))
@@ -43,11 +43,11 @@ func (d PixSilce) Slice(newSliceType reflect.Type) interface{} {
 	return newSlice.Elem().Interface()
 }
 
-func (d PixSilce) Bytes() (v []byte) {
+func (d PixSlice) Bytes() (v []byte) {
 	return d
 }
 
-func (d PixSilce) Int8s() (v []int8) {
+func (d PixSlice) Int8s() (v []int8) {
 	h0 := (*reflect.SliceHeader)(unsafe.Pointer(&d))
 	h1 := (*reflect.SliceHeader)(unsafe.Pointer(&v))
 
@@ -57,7 +57,7 @@ func (d PixSilce) Int8s() (v []int8) {
 	return
 }
 
-func (d PixSilce) Int16s() (v []int16) {
+func (d PixSlice) Int16s() (v []int16) {
 	h0 := (*reflect.SliceHeader)(unsafe.Pointer(&d))
 	h1 := (*reflect.SliceHeader)(unsafe.Pointer(&v))
 
@@ -67,7 +67,7 @@ func (d PixSilce) Int16s() (v []int16) {
 	return
 }
 
-func (d PixSilce) Int32s() (v []int32) {
+func (d PixSlice) Int32s() (v []int32) {
 	h0 := (*reflect.SliceHeader)(unsafe.Pointer(&d))
 	h1 := (*reflect.SliceHeader)(unsafe.Pointer(&v))
 
@@ -77,7 +77,7 @@ func (d PixSilce) Int32s() (v []int32) {
 	return
 }
 
-func (d PixSilce) Int64s() (v []int64) {
+func (d PixSlice) Int64s() (v []int64) {
 	h0 := (*reflect.SliceHeader)(unsafe.Pointer(&d))
 	h1 := (*reflect.SliceHeader)(unsafe.Pointer(&v))
 
@@ -87,11 +87,11 @@ func (d PixSilce) Int64s() (v []int64) {
 	return
 }
 
-func (d PixSilce) Uint8s() []uint8 {
+func (d PixSlice) Uint8s() []uint8 {
 	return d
 }
 
-func (d PixSilce) Uint16s() (v []uint16) {
+func (d PixSlice) Uint16s() (v []uint16) {
 	h0 := (*reflect.SliceHeader)(unsafe.Pointer(&d))
 	h1 := (*reflect.SliceHeader)(unsafe.Pointer(&v))
 
@@ -101,7 +101,7 @@ func (d PixSilce) Uint16s() (v []uint16) {
 	return
 }
 
-func (d PixSilce) Uint32s() (v []uint32) {
+func (d PixSlice) Uint32s() (v []uint32) {
 	h0 := (*reflect.SliceHeader)(unsafe.Pointer(&d))
 	h1 := (*reflect.SliceHeader)(unsafe.Pointer(&v))
 
@@ -111,7 +111,7 @@ func (d PixSilce) Uint32s() (v []uint32) {
 	return
 }
 
-func (d PixSilce) Uint64s() (v []uint64) {
+func (d PixSlice) Uint64s() (v []uint64) {
 	h0 := (*reflect.SliceHeader)(unsafe.Pointer(&d))
 	h1 := (*reflect.SliceHeader)(unsafe.Pointer(&v))
 
@@ -121,7 +121,7 @@ func (d PixSilce) Uint64s() (v []uint64) {
 	return
 }
 
-func (d PixSilce) Float32s() (v []float32) {
+func (d PixSlice) Float32s() (v []float32) {
 	h0 := (*reflect.SliceHeader)(unsafe.Pointer(&d))
 	h1 := (*reflect.SliceHeader)(unsafe.Pointer(&v))
 
@@ -131,7 +131,7 @@ func (d PixSilce) Float32s() (v []float32) {
 	return
 }
 
-func (d PixSilce) Float64s() (v []float64) {
+func (d PixSlice) Float64s() (v []float64) {
 	h0 := (*reflect.SliceHeader)(unsafe.Pointer(&d))
 	h1 := (*reflect.SliceHeader)(unsafe.Pointer(&v))
 
@@ -141,7 +141,7 @@ func (d PixSilce) Float64s() (v []float64) {
 	return
 }
 
-func (d PixSilce) Complex64s() (v []complex64) {
+func (d PixSlice) Complex64s() (v []complex64) {
 	h0 := (*reflect.SliceHeader)(unsafe.Pointer(&d))
 	h1 := (*reflect.SliceHeader)(unsafe.Pointer(&v))
 
@@ -151,7 +151,7 @@ func (d PixSilce) Complex64s() (v []complex64) {
 	return
 }
 
-func (d PixSilce) Complex128s() (v []complex128) {
+func (d PixSlice) Complex128s() (v []complex128) {
 	h0 := (*reflect.SliceHeader)(unsafe.Pointer(&d))
 	h1 := (*reflect.SliceHeader)(unsafe.Pointer(&v))
 
@@ -161,7 +161,7 @@ func (d PixSilce) Complex128s() (v []complex128) {
 	return
 }
 
-func (d PixSilce) Value(i int, dataType reflect.Kind) float64 {
+func (d PixSlice) Value(i int, dataType reflect.Kind) float64 {
 	switch dataType {
 	case reflect.Int8:
 		return float64(d.Int8s()[i])
@@ -191,7 +191,7 @@ func (d PixSilce) Value(i int, dataType reflect.Kind) float64 {
 	return 0
 }
 
-func (d PixSilce) SetValue(i int, dataType reflect.Kind, v float64) {
+func (d PixSlice) SetValue(i int, dataType reflect.Kind, v float64) {
 	switch dataType {
 	case reflect.Int8:
 		d.Int8s()[i] = int8(v)
@@ -220,7 +220,7 @@ func (d PixSilce) SetValue(i int, dataType reflect.Kind, v float64) {
 	}
 }
 
-func (d PixSilce) SwapEndian(dataType reflect.Kind) {
+func (d PixSlice) SwapEndian(dataType reflect.Kind) {
 	switch dataType {
 	case reflect.Int16, reflect.Uint16:
 		for i := 0; i+2-1 < len(d); i = i + 2 {

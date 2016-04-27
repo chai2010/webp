@@ -46,7 +46,7 @@ type MemPImage struct {
 	XRect      image.Rectangle
 	XChannels  int
 	XDataType  reflect.Kind
-	XPix       PixSilce
+	XPix       PixSlice
 	XStride    int
 }
 
@@ -341,7 +341,7 @@ func (p *MemPImage) StdImage() image.Image {
 		}
 		if isLittleEndian {
 			m.Pix = append([]byte(nil), m.Pix...)
-			PixSilce(m.Pix).SwapEndian(p.XDataType)
+			PixSlice(m.Pix).SwapEndian(p.XDataType)
 		}
 		return m
 	case p.XChannels == 4 && p.XDataType == reflect.Uint8:
@@ -358,7 +358,7 @@ func (p *MemPImage) StdImage() image.Image {
 		}
 		if isLittleEndian {
 			m.Pix = append([]byte(nil), m.Pix...)
-			PixSilce(m.Pix).SwapEndian(p.XDataType)
+			PixSlice(m.Pix).SwapEndian(p.XDataType)
 		}
 		return m
 	}

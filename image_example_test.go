@@ -120,7 +120,7 @@ func ExampleImage_rgb() {
 	for y := b.Min.Y; y < b.Max.Y; y++ {
 		var (
 			line     []byte = rgbImage.XPix[rgbImage.PixOffset(b.Min.X, y):][:rgbImage.XStride]
-			rgbSlice []RGB  = PixSilce(line).Slice(reflect.TypeOf([]RGB(nil))).([]RGB)
+			rgbSlice []RGB  = PixSlice(line).Slice(reflect.TypeOf([]RGB(nil))).([]RGB)
 		)
 
 		for i, _ := range rgbSlice {
@@ -144,7 +144,7 @@ func ExampleImage_rgb48() {
 	for y := b.Min.Y; y < b.Max.Y; y++ {
 		var (
 			line     []byte = rgbImage.XPix[rgbImage.PixOffset(b.Min.X, y):][:rgbImage.XStride]
-			rgbSlice []RGB  = PixSilce(line).Slice(reflect.TypeOf([]RGB(nil))).([]RGB)
+			rgbSlice []RGB  = PixSlice(line).Slice(reflect.TypeOf([]RGB(nil))).([]RGB)
 		)
 
 		for i, _ := range rgbSlice {

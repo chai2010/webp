@@ -12,7 +12,7 @@ import (
 type MemPColor struct {
 	Channels int
 	DataType reflect.Kind
-	Pix      PixSilce
+	Pix      PixSlice
 }
 
 func (c MemPColor) RGBA() (r, g, b, a uint32) {
@@ -121,7 +121,7 @@ func colorModelConvert(channels int, dataType reflect.Kind, c color.Color) color
 	c2 := MemPColor{
 		Channels: channels,
 		DataType: dataType,
-		Pix:      make(PixSilce, channels*SizeofKind(dataType)),
+		Pix:      make(PixSlice, channels*SizeofKind(dataType)),
 	}
 
 	if c1, ok := c.(MemPColor); ok {

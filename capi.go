@@ -109,6 +109,39 @@ func webpDecodeRGBA(data []byte) (pix []byte, width, height int, err error) {
 	return
 }
 
+func webpDecodeGrayToSize(data []byte, width, height int) (pix []byte, err error) {
+	pix = make([]byte, int(width*height))
+	stride := C.int(width)
+	res := C.webpDecodeGrayToSize((*C.uint8_t)(unsafe.Pointer(&data[0])), C.size_t(len(data)), C.int(width), C.int(height), stride, (*C.uint8_t)(unsafe.Pointer(&pix[0])))
+	if res != C.VP8_STATUS_OK {
+		pix = nil
+		err = errors.New("webpDecodeGrayToSize: failed")
+	}
+	return
+}
+
+func webpDecodeRGBToSize(data []byte, width, height int) (pix []byte, err error) {
+	pix = make([]byte, int(3*width*height))
+	stride := C.int(3 * width)
+	res := C.webpDecodeRGBToSize((*C.uint8_t)(unsafe.Pointer(&data[0])), C.size_t(len(data)), C.int(width), C.int(height), stride, (*C.uint8_t)(unsafe.Pointer(&pix[0])))
+	if res != C.VP8_STATUS_OK {
+		pix = nil
+		err = errors.New("webpDecodeRGBToSize: failed")
+	}
+	return
+}
+
+func webpDecodeRGBAToSize(data []byte, width, height int) (pix []byte, err error) {
+	pix = make([]byte, int(4*width*height))
+	stride := C.int(4 * width)
+	res := C.webpDecodeRGBAToSize((*C.uint8_t)(unsafe.Pointer(&data[0])), C.size_t(len(data)), C.int(width), C.int(height), stride, (*C.uint8_t)(unsafe.Pointer(&pix[0])))
+	if res != C.VP8_STATUS_OK {
+		pix = nil
+		err = errors.New("webpDecodeRGBAToSize: failed")
+	}
+	return
+}
+
 func webpEncodeGray(pix []byte, width, height, stride int, quality float32) (output []byte, err error) {
 	if len(pix) == 0 || width <= 0 || height <= 0 || stride <= 0 || quality < 0.0 {
 		err = errors.New("webpEncodeGray: bad arguments")

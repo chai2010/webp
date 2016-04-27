@@ -87,6 +87,85 @@ uint8_t* webpDecodeRGBA(
 	return WebPDecodeRGBA(data, data_size, width, height);
 }
 
+int webpDecodeGrayToSize(const uint8_t* data, size_t data_size,
+	int width, int height, int outStride, uint8_t* out
+) {
+	WebPDecoderConfig config;
+	if(!WebPInitDecoderConfig(&config)) {
+		return -1;
+	}
+
+	config.options.bypass_filtering = 1;
+	config.options.no_fancy_upsampling = 1;
+	config.options.use_scaling = 1;
+	config.options.scaled_width = width;
+	config.options.scaled_height = height;
+	config.output.colorspace = MODE_YUV;
+
+	int status = WebPDecode(data, data_size, &config);
+	if(status != VP8_STATUS_OK) {
+		return status;
+	}
+
+	int yStride = config.output.u.YUVA.y_stride;
+	uint8_t* src = config.output.u.YUVA.y;
+	uint8_t* dst = out;
+	int i;
+
+	for(i = 0; i < height; ++i) {
+		memmove(dst, src, width);
+		src += yStride;
+		dst += outStride;
+	}
+
+	WebPFreeDecBuffer(&config.output);
+	return status;
+}
+
+int webpDecodeRGBToSize(const uint8_t* data, size_t data_size,
+	int width, int height, int outStride, uint8_t* out
+) {
+	WebPDecoderConfig config;
+	if(!WebPInitDecoderConfig(&config)) {
+		return -1;
+	}
+
+	config.options.bypass_filtering = 1;
+	config.options.no_fancy_upsampling = 1;
+	config.options.use_scaling = 1;
+	config.options.scaled_width = width;
+	config.options.scaled_height = height;
+	config.output.colorspace = MODE_RGB;
+	config.output.u.RGBA.rgba = out;
+	config.output.u.RGBA.stride = outStride;
+	config.output.u.RGBA.size = outStride * height;
+	config.output.is_external_memory = 1;
+
+	return WebPDecode(data, data_size, &config);
+}
+
+int webpDecodeRGBAToSize(const uint8_t* data, size_t data_size,
+	int width, int height, int outStride, uint8_t* out
+) {
+	WebPDecoderConfig config;
+	if(!WebPInitDecoderConfig(&config)) {
+		return -1;
+	}
+
+	config.options.bypass_filtering = 1;
+	config.options.no_fancy_upsampling = 1;
+	config.options.use_scaling = 1;
+	config.options.scaled_width = width;
+	config.options.scaled_height = height;
+	config.output.colorspace = MODE_RGBA;
+	config.output.u.RGBA.rgba = out;
+	config.output.u.RGBA.stride = outStride;
+	config.output.u.RGBA.size = outStride * height;
+	config.output.is_external_memory = 1;
+
+	return WebPDecode(data, data_size, &config);
+}
+
 uint8_t* webpEncodeGray(
 	const uint8_t* gray, int width, int height, int stride, float quality_factor,
 	size_t* output_size

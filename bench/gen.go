@@ -46,6 +46,7 @@ var testFilenames = []string{
 	"gopher-doc.2bpp.lossless.webp",
 	"gopher-doc.4bpp.lossless.webp",
 	"gopher-doc.8bpp.lossless.webp",
+	"photo.lossy.webp",
 	"tux.lossless.webp",
 	"video-001.lossy.webp",
 	"video-001.webp",
@@ -122,6 +123,18 @@ func BenchmarkDecode_{{.goodBaseName}}_x_image_webp(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		m, err := x_image_webp.Decode(bytes.NewReader(data))
+		if err != nil {
+			b.Fatal(err)
+		}
+		_ = m
+	}
+}
+
+func BenchmarkDecode_{{.goodBaseName}}_chai2010_webp_tosize(b *testing.B) {
+	data := tbLoadData(b, "{{.filename}}")
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		m, err := chai2010_webp.DecodeRGBAToSize(data, 256, 256)
 		if err != nil {
 			b.Fatal(err)
 		}

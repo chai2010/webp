@@ -56,6 +56,50 @@ func DecodeRGBA(data []byte) (m *image.RGBA, err error) {
 	return
 }
 
+// DecodeGrayToSize decodes a Gray image scaled to the given dimensions. For
+// large images, the DecodeXXXToSize methods are significantly faster and
+// require less memory compared to decoding a full-size image and then resizing it.
+func DecodeGrayToSize(data []byte, width, height int) (m *image.Gray, err error) {
+	pix, err := webpDecodeGrayToSize(data, width, height)
+	if err != nil {
+		return
+	}
+	m = &image.Gray{
+		Pix:    pix,
+		Stride: width,
+		Rect:   image.Rect(0, 0, width, height),
+	}
+	return
+}
+
+// DecodeRGBToSize decodes an RGB image scaled to the given dimensions.
+func DecodeRGBToSize(data []byte, width, height int) (m *RGBImage, err error) {
+	pix, err := webpDecodeRGBToSize(data, width, height)
+	if err != nil {
+		return
+	}
+	m = &RGBImage{
+		XPix:    pix,
+		XStride: 3 * width,
+		XRect:   image.Rect(0, 0, width, height),
+	}
+	return
+}
+
+// DecodeRGBAToSize decodes a Gray image scaled to the given dimensions.
+func DecodeRGBAToSize(data []byte, width, height int) (m *image.RGBA, err error) {
+	pix, err := webpDecodeRGBAToSize(data, width, height)
+	if err != nil {
+		return
+	}
+	m = &image.RGBA{
+		Pix:    pix,
+		Stride: 4 * width,
+		Rect:   image.Rect(0, 0, width, height),
+	}
+	return
+}
+
 func EncodeGray(m image.Image, quality float32) (data []byte, err error) {
 	p := toGrayImage(m)
 	data, err = webpEncodeGray(p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride, quality)

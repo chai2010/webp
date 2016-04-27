@@ -6,4 +6,4 @@ go:
   - tip
 
 before_script:
-  - go get golang.org/x/image/webp
+  - go get -d golang.org/x/image/webp

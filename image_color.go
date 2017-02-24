@@ -111,10 +111,36 @@ func (c MemPColor) RGBA() (r, g, b, a uint32) {
 	return
 }
 
+type ColorModelInterface interface {
+	Channels() int
+	DataType() reflect.Kind
+}
+
+type _ColorModelT struct {
+	XChannels int
+	XDataType reflect.Kind
+}
+
+var (
+	_ ColorModelInterface = _ColorModelT{1, reflect.Uint8}
+)
+
+func (m _ColorModelT) Convert(c color.Color) color.Color {
+	return colorModelConvert(m.XChannels, m.XDataType, c)
+}
+
+func (m _ColorModelT) Channels() int {
+	return m.XChannels
+}
+func (m _ColorModelT) DataType() reflect.Kind {
+	return m.XDataType
+}
+
 func ColorModel(channels int, dataType reflect.Kind) color.Model {
-	return color.ModelFunc(func(c color.Color) color.Color {
-		return colorModelConvert(channels, dataType, c)
-	})
+	return _ColorModelT{
+		XChannels: channels,
+		XDataType: dataType,
+	}
 }
 
 func colorModelConvert(channels int, dataType reflect.Kind, c color.Color) color.Color {

@@ -6,4 +6,4 @@
 
 // +build cgo
 
-#include "./internal/libwebp/src/dsp/dec.c"
+#include "src/dsp/dec.c"

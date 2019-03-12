@@ -4,4 +4,4 @@
 
 // +build cgo
 
-#include "./internal/libwebp/src/webp.c"
+#include "internal/src/webp.c"

@@ -6,4 +6,4 @@
 
 // +build cgo
 
-#include "./internal/libwebp/src/dsp/lossless.c"
+#include "src/dsp/lossless.c"

@@ -6,4 +6,4 @@
 
 // +build cgo
 
-#include "./internal/libwebp/src/mux/muxedit.c"
+#include "src/mux/muxedit.c"

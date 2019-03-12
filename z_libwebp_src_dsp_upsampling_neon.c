@@ -6,4 +6,4 @@
 
 // +build cgo
 
-#include "./internal/libwebp/src/dsp/upsampling_neon.c"
+#include "src/dsp/upsampling_neon.c"

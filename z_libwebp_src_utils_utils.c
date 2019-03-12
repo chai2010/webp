@@ -6,4 +6,4 @@
 
 // +build cgo
 
-#include "./internal/libwebp/src/utils/utils.c"
+#include "src/utils/utils.c"

@@ -6,4 +6,4 @@
 
 // +build cgo
 
-#include "./internal/libwebp/src/demux/demux.c"
+#include "src/demux/demux.c"

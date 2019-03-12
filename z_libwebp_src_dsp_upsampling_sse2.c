@@ -6,4 +6,4 @@
 
 // +build cgo
 
-#include "./internal/libwebp/src/dsp/upsampling_sse2.c"
+#include "src/dsp/upsampling_sse2.c"

@@ -6,4 +6,4 @@
 
 // +build cgo
 
-#include "./internal/libwebp/src/mux/muxinternal.c"
+#include "src/mux/muxinternal.c"

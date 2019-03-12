@@ -6,4 +6,4 @@
 
 // +build cgo
 
-#include "./internal/libwebp/src/dsp/dec_neon.c"
+#include "src/dsp/dec_neon.c"

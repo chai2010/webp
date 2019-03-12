@@ -38,9 +38,14 @@ func clearOldGenFiles() {
 }
 
 func genIncludeFiles() {
-	ss := parseCMakeListsTxt("internal/libwebp/CMakeLists.txt", "WEBP_SRC", ".c")
+	ss := parseCMakeListsTxt("internal/libwebp-1.0.2/CMakeLists.txt", "WEBP_SRC_DIR", "*.c")
+	muxSS, err := findFiles("internal/libwebp-1.0.2/src/mux", "*.c")
+	if err != nil {
+		log.Fatal(err)
+	}
+	ss = append(ss, muxSS...)
 	for i := 0; i < len(ss); i++ {
-		relpath := ss[i][2:] // drop `./`
+		relpath := ss[i][23:] // drop `./`
 		newname := "z_libwebp_" + strings.Replace(relpath, "/", "_", -1)
 
 		ioutil.WriteFile(newname, []byte(fmt.Sprintf(
@@ -52,7 +57,7 @@ func genIncludeFiles() {
 
 // +build cgo
 
-#include "./internal/libwebp/%s"
+#include "%s"
 `, relpath,
 		)), 0666)
 
@@ -89,21 +94,29 @@ func parseCMakeListsTxt(filename, varname, ext string) (ss []string) {
 		}
 	}
 
-	// read $varname, end with `)`
+	// read parse_makefile_am(${varname}, end with `)`
+	prefix := fmt.Sprintf("parse_makefile_am(${%s}/", varname)
+	baseDir := filepath.Join(filepath.Dir(filename), "src")
 	for {
 		line, _, err := br.ReadLine()
 		if err != nil {
 			log.Fatal(err)
 		}
-		if strings.HasPrefix(string(line), ")") {
+		s := string(line)
+		if !strings.HasPrefix(s, prefix) {
 			break
 		}
-		switch v := strings.TrimSpace(string(line)); {
-		case strings.HasPrefix(v, `${`): // parse ${?}
-			ss = append(ss, parseCMakeListsTxt(filename, v[2:len(v)-3], ext)...)
-		case strings.HasSuffix(v, ext): // *.ext
-			ss = append(ss, v)
+		subdir := strings.Split(s, " ")[0][len(prefix):]
+		dir := filepath.Join(baseDir, subdir)
+		sf, err := findFiles(dir, ext)
+		if err != nil {
+			log.Fatal(err)
 		}
+		ss = append(ss, sf...)
 	}
 	return
+}
+
+func findFiles(dir, ext string) ([]string, error){
+	return filepath.Glob(fmt.Sprintf("%s/%s", dir, ext))
 }

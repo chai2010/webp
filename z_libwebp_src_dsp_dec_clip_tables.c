@@ -6,4 +6,4 @@
 
 // +build cgo
 
-#include "./internal/libwebp/src/dsp/dec_clip_tables.c"
+#include "src/dsp/dec_clip_tables.c"

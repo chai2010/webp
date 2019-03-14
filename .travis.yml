@@ -1,9 +1,34 @@
 language: go
+sudo: required
 
 go:
   - 1.5
   - 1.6
+  - 1.10
+  - 1.11
+  - 1.12
   - tip
+
+env:
+  - LIBWEBP_VER=0.4.4
+  - LIBWEBP_VER=0.5.2
+  - LIBWEBP_VER=0.6.1
+  - LIBWEBP_VER=1.0.2
+
+addons:
+  apt:
+    packages:
+      - libjpeg-dev
+      - libpng-dev
+      - libtiff-dev
+      - libgif-dev
+
+before_install:
+  - curl -O https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-${LIBWEBP_VER}.tar.gz
+  - tar -zxvf libwebp-${LIBWEBP_VER}.tar.gz
+  - cd libwebp-${LIBWEBP_VER} && ./configure --enable-libwebpmux --enable-libwebpdemux --enable-libwebpdecoder --disable-near-lossless && make && sudo make install && cd ..
+  - rm -rf libwebp-${LIBWEBP_VER}
+  - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 
 before_script:
   - go get -d golang.org/x/image/webp

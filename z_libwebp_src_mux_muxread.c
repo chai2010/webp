@@ -6,4 +6,4 @@
 
 // +build cgo
 
-#include "./internal/libwebp/src/mux/muxread.c"
+#include "src/mux/muxread.c"

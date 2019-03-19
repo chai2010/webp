@@ -6,4 +6,4 @@
 
 // +build cgo
 
-#include "./internal/libwebp/src/dsp/cpu.c"
+#include "src/dsp/cpu.c"

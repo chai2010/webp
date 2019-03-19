@@ -15,6 +15,8 @@ type tTester struct {
 	Lossless bool
 	Quality  float32 // 0 ~ 100
 	MaxDelta int
+	MinDelta int
+	Exact    bool
 }
 
 var tTesterList = []tTester{
@@ -33,6 +35,7 @@ var tTesterList = []tTester{
 	tTester{
 		Filename: "2_webp_ll.png",
 		Lossless: true,
+		Exact:    true,
 		Quality:  90,
 		MaxDelta: 0,
 	},
@@ -45,6 +48,7 @@ var tTesterList = []tTester{
 	tTester{
 		Filename: "4_webp_ll.png",
 		Lossless: true,
+		Exact:    true,
 		Quality:  90,
 		MaxDelta: 0,
 	},
@@ -53,6 +57,14 @@ var tTesterList = []tTester{
 		Lossless: false,
 		Quality:  75,
 		MaxDelta: 15,
+	},
+	tTester{
+		Filename: "4_webp_ll.png",
+		Lossless: true,
+		Quality:  90,
+		Exact:    false,
+		MaxDelta: 13,
+		MinDelta: 10,
 	},
 }
 
@@ -67,6 +79,7 @@ func TestEncode(t *testing.T) {
 		err = Encode(buf, img0, &Options{
 			Lossless: v.Lossless,
 			Quality:  v.Quality,
+			Exact:    v.Exact,
 		})
 		if err != nil {
 			t.Fatalf("%d: %v", i, err)
@@ -79,11 +92,15 @@ func TestEncode(t *testing.T) {
 
 		// Compare the average delta to the tolerance level.
 		var want int
-		if !v.Lossless {
+		if !v.Lossless || !v.Exact {
 			want = v.MaxDelta
 		}
-		if got := averageDelta(img0, img1); got > want {
+		got := averageDelta(img0, img1)
+		if got > want {
 			t.Fatalf("%d: average delta too high; got %d, want <= %d", i, got, want)
+		}
+		if v.MinDelta > 0 && got < v.MinDelta {
+			t.Fatalf("%d: average delta too low; got %d; want >= %d", i, got, v.MinDelta)
 		}
 	}
 }

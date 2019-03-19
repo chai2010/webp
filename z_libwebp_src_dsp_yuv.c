@@ -6,4 +6,4 @@
 
 // +build cgo
 
-#include "./internal/libwebp/src/dsp/yuv.c"
+#include "src/dsp/yuv.c"

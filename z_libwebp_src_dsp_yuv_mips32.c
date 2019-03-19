@@ -6,4 +6,4 @@
 
 // +build cgo
 
-#include "./internal/libwebp/src/dsp/yuv_mips32.c"
+#include "src/dsp/yuv_mips32.c"

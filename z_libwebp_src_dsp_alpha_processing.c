@@ -6,4 +6,4 @@
 
 // +build cgo
 
-#include "./internal/libwebp/src/dsp/alpha_processing.c"
+#include "src/dsp/alpha_processing.c"

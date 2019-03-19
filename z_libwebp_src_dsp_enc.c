@@ -6,4 +6,4 @@
 
 // +build cgo
 
-#include "./internal/libwebp/src/dsp/enc.c"
+#include "src/dsp/enc.c"

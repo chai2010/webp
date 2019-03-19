@@ -6,4 +6,4 @@
 
 // +build cgo
 
-#include "./internal/libwebp/src/dsp/lossless_neon.c"
+#include "src/dsp/lossless_neon.c"

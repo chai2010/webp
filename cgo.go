@@ -174,11 +174,13 @@ func C_webpEncodeLosslessRGB(
 }
 
 func C_webpEncodeLosslessRGBA(
+	exact C_int,
 	pix *C_uint8_t,
 	width C_int, height C_int, stride C_int,
 	output_size *C_size_t,
 ) *C_uint8_t {
 	return (*C_uint8_t)(C.webpEncodeLosslessRGBA(
+		(C.int) (exact),
 		(*C.uint8_t)(pix),
 		(C.int)(width), (C.int)(height), (C.int)(stride),
 		(*C.size_t)(output_size),

@@ -280,7 +280,7 @@ func webpEncodeLosslessRGB(pix []byte, width, height, stride int) (output []byte
 	return
 }
 
-func webpEncodeLosslessRGBA(pix []byte, width, height, stride int) (output []byte, err error) {
+func webpEncodeLosslessRGBA(exact int, pix []byte, width, height, stride int) (output []byte, err error) {
 	if len(pix) == 0 || width <= 0 || height <= 0 || stride <= 0 {
 		err = errors.New("webpEncodeLosslessRGBA: bad arguments")
 		return
@@ -292,7 +292,7 @@ func webpEncodeLosslessRGBA(pix []byte, width, height, stride int) (output []byt
 
 	var cptr_size C.size_t
 	var cptr = C.webpEncodeLosslessRGBA(
-		(*C.uint8_t)(unsafe.Pointer(&pix[0])), C.int(width), C.int(height),
+		C.int(exact), (*C.uint8_t)(unsafe.Pointer(&pix[0])), C.int(width), C.int(height),
 		C.int(stride),
 		&cptr_size,
 	)

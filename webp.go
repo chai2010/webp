@@ -135,7 +135,15 @@ func EncodeLosslessRGB(m image.Image) (data []byte, err error) {
 
 func EncodeLosslessRGBA(m image.Image) (data []byte, err error) {
 	p := toRGBAImage(m)
-	data, err = webpEncodeLosslessRGBA(p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride)
+	data, err = webpEncodeLosslessRGBA(0, p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride)
+	return
+}
+
+// EncodeExactLosslessRGBA Encode lossless RGB mode with exact.
+// exact: preserve RGB values in transparent area.
+func EncodeExactLosslessRGBA(m image.Image) (data []byte, err error) {
+	p := toRGBAImage(m)
+	data, err = webpEncodeLosslessRGBA(1, p.Pix, p.Rect.Dx(), p.Rect.Dy(), p.Stride)
 	return
 }
 

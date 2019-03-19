@@ -8,6 +8,7 @@
 #include "webp/demux.h"
 #include "webp/mux.h"
 
+#include <assert.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -21,7 +22,7 @@ int webpGetInfo(
 		return 0;
 	}
 	if(width != NULL) {
-		*width  = features.width;
+		*width = features.width;
 	}
 	if(height != NULL) {
 		*height = features.height;
@@ -46,7 +47,7 @@ uint8_t* webpDecodeGray(
 		return NULL;
 	}
 	if (width != NULL) {
-		*width  = w;
+		*width = w;
 	}
 	if (height != NULL) {
 		*height = h;
@@ -211,6 +212,7 @@ uint8_t* webpEncodeRGBA(
 	return output;
 }
 
+
 uint8_t* webpEncodeLosslessGray(
 	const uint8_t* gray, int width, int height, int stride,
 	size_t* output_size
@@ -238,6 +240,7 @@ uint8_t* webpEncodeLosslessGray(
 	return output;
 }
 
+
 uint8_t* webpEncodeLosslessRGB(
 	const uint8_t* rgb, int width, int height, int stride,
 	size_t* output_size
@@ -247,13 +250,41 @@ uint8_t* webpEncodeLosslessRGB(
 	return output;
 }
 
+
 uint8_t* webpEncodeLosslessRGBA(
-	const uint8_t* rgba, int width, int height, int stride,
+	int exact, const uint8_t* rgba, int width, int height, int stride,
 	size_t* output_size
 ) {
-	uint8_t* output = NULL;
-	*output_size = WebPEncodeLosslessRGBA(rgba, width, height, stride, &output);
-	return output;
+	WebPPicture pic;
+	WebPMemoryWriter wrt;
+	WebPConfig config;
+	int ok;
+
+	if (!WebPConfigPreset(&config, WEBP_PRESET_DEFAULT, 100) || !WebPPictureInit(&pic)) {
+		return 0;
+	}
+
+	config.lossless = 1;
+	config.exact = exact;
+
+	pic.use_argb = 1;
+	pic.width = width;
+	pic.height = height;
+
+	pic.writer = WebPMemoryWrite;
+	pic.custom_ptr = &wrt;
+	WebPMemoryWriterInit(&wrt);
+
+	ok = WebPPictureImportRGBA(&pic, rgba, stride) && WebPEncode(&config, &pic);
+
+	WebPPictureFree(&pic);
+	if (!ok) {
+		WebPMemoryWriterClear(&wrt);
+		return 0;
+	}
+	*output_size = wrt.size;
+
+	return wrt.mem;
 }
 
 char* webpGetEXIF(const uint8_t* data, size_t data_size, size_t* metadata_size) {

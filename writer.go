@@ -20,6 +20,7 @@ const DefaulQuality = 90
 type Options struct {
 	Lossless bool
 	Quality  float32 // 0 ~ 100
+	Exact    bool    // Preserve RGB values in transparent area.
 }
 
 type colorModeler interface {
@@ -54,7 +55,12 @@ func encode(w io.Writer, m image.Image, opt *Options) (err error) {
 				return
 			}
 		case *image.RGBA:
-			if output, err = EncodeLosslessRGBA(m); err != nil {
+			if opt.Exact {
+				output, err = EncodeExactLosslessRGBA(m)
+			} else {
+				output, err = EncodeLosslessRGBA(m)
+			}
+			if err != nil {
 				return
 			}
 		default:
@@ -65,6 +71,7 @@ func encode(w io.Writer, m image.Image, opt *Options) (err error) {
 		if opt != nil {
 			quality = opt.Quality
 		}
+
 		switch m := adjustImage(m).(type) {
 		case *image.Gray:
 			if output, err = EncodeGray(m, quality); err != nil {

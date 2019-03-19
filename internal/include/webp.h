@@ -64,7 +64,7 @@ uint8_t* webpEncodeLosslessRGB(
 	size_t* output_size
 );
 uint8_t* webpEncodeLosslessRGBA(
-	const uint8_t* rgba, int width, int height, int stride,
+	int exact, const uint8_t* rgba, int width, int height, int stride,
 	size_t* output_size
 );
 

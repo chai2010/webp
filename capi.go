@@ -11,6 +11,7 @@
 // Go1.6:
 // https://github.com/golang/proposal/blob/master/design/12416-cgo-pointers.md
 //
+// libwebp version 1.2.1
 
 package webp
 

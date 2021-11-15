@@ -26,6 +26,7 @@ func main() {
 	printOldGenFiles()
 }
 
+const wver="1.2.1"
 func clearOldGenFiles() {
 	ss, err := filepath.Glob("z_*.c")
 	if err != nil {
@@ -38,8 +39,10 @@ func clearOldGenFiles() {
 }
 
 func genIncludeFiles() {
-	ss := parseCMakeListsTxt("internal/libwebp-1.0.2/CMakeLists.txt", "WEBP_SRC_DIR", "*.c")
-	muxSS, err := findFiles("internal/libwebp-1.0.2/src/mux", "*.c")
+	s1:=fmt.Sprintf("internal/libwebp-%s/CMakeLists.txt",wver)
+	s2:=fmt.Sprintf("internal/libwebp-%s/src/mux",wver)
+	ss := parseCMakeListsTxt(s1, "WEBP_SRC_DIR", "*.c")
+	muxSS, err := findFiles(s2, "*.c")
 	if err != nil {
 		log.Fatal(err)
 	}

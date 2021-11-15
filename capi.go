@@ -15,8 +15,8 @@
 package webp
 
 /*
-#cgo CFLAGS: -I./internal/libwebp-1.0.2/
-#cgo CFLAGS: -I./internal/libwebp-1.0.2/src/
+#cgo CFLAGS: -I./internal/libwebp-1.2.1/
+#cgo CFLAGS: -I./internal/libwebp-1.2.1/src/
 #cgo CFLAGS: -I./internal/include/
 #cgo CFLAGS: -Wno-pointer-sign -DWEBP_USE_THREAD
 #cgo !windows LDFLAGS: -lm

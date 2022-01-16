@@ -7,7 +7,12 @@ package webp
 import (
 	"image"
 	"strings"
+
+	"embed"
 )
+
+//go:embed internal
+var _ embed.FS
 
 const (
 	maxWebpHeaderSize = 32

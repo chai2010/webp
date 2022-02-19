@@ -11,7 +11,7 @@ import (
 	"reflect"
 )
 
-func ExamplePixSilce() {
+func ExampleAsPixSilce() {
 	a := []int32{101, 102, 103}
 	b := AsPixSilce(a)
 
@@ -25,7 +25,7 @@ func ExamplePixSilce() {
 	// b.Int32s() = [12345 1002 1003]
 }
 
-func ExamplePixSilce_SwapEndian() {
+func ExampleAsPixSilce_swapEndian() {
 	rgba64 := image.NewRGBA64(image.Rect(0, 0, 1, 1))
 	rgba64.SetRGBA64(0, 0, color.RGBA64{
 		R: 0x0102,

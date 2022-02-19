@@ -12,7 +12,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <malloc.h>
+#include <stdlib.h>
 
 #define JPGE_MAX(a,b) (((a)>(b))?(a):(b))
 #define JPGE_MIN(a,b) (((a)<(b))?(a):(b))

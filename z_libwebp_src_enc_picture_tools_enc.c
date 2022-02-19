@@ -1,4 +1,4 @@
-// Copyright 2014 <chaishushan{AT}gmail.com>. All rights reserved.
+// Copyright 2022 <chaishushan{AT}gmail.com>. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -6,4 +6,4 @@
 
 // +build cgo
 
-#include "src/enc/picture_tools_enc.c"
+#include "./internal/libwebp-1.2.2/src/enc/picture_tools_enc.c"

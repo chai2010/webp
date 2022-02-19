@@ -11,12 +11,13 @@
 // Go1.6:
 // https://github.com/golang/proposal/blob/master/design/12416-cgo-pointers.md
 //
+// libwebp version 1.2.1
 
 package webp
 
 /*
-#cgo CFLAGS: -I./internal/libwebp-1.0.2/
-#cgo CFLAGS: -I./internal/libwebp-1.0.2/src/
+#cgo CFLAGS: -I./internal/libwebp-1.2.1/
+#cgo CFLAGS: -I./internal/libwebp-1.2.1/src/
 #cgo CFLAGS: -I./internal/include/
 #cgo CFLAGS: -Wno-pointer-sign -DWEBP_USE_THREAD
 #cgo !windows LDFLAGS: -lm

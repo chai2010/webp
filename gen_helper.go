@@ -2,8 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build ignore
-// +build ignore
+//go:build ingore
+// +build ingore
 
 package main
 
@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 	"strings"
 )
@@ -33,24 +34,34 @@ func clearOldGenFiles() {
 		log.Fatal(err)
 	}
 	for i := 0; i < len(ss); i++ {
-		ioutil.WriteFile(ss[i], []byte("#error file removed!!!\n"), 0666)
+		os.Remove(ss[i])
 		oldGenFiles[ss[i]] = true
 	}
 }
 
 func genIncludeFiles() {
-	ss := parseCMakeListsTxt("internal/libwebp-1.0.2/CMakeLists.txt", "WEBP_SRC_DIR", "*.c")
-	muxSS, err := findFiles("internal/libwebp-1.0.2/src/mux", "*.c")
-	if err != nil {
-		log.Fatal(err)
-	}
-	ss = append(ss, muxSS...)
+	wd, _ := os.Getwd()
+
+	ss := parseCMakeListsTxt("internal/src/CMakeLists.txt", "WEBP_SRC", ".c")
+
 	for i := 0; i < len(ss); i++ {
-		relpath := ss[i][23:] // drop `./`
-		newname := "z_libwebp_" + strings.Replace(relpath, "/", "_", -1)
+		ss[i], _ = filepath.Abs(ss[i])
+		ss[i], _ = filepath.Rel(wd, ss[i])
+		fmt.Println(ss[i])
+	}
+	for i := 0; i < len(ss); i++ {
+		relpath := ss[i]
+
+		newname := relpath
+		newname = strings.TrimPrefix(newname, "internal/")
+		newname = strings.TrimSuffix(newname, ".c")
+		newname = strings.Replace(newname, "libwebp-1.2.2", "libwebp", -1)
+		newname = strings.Replace(newname, "/", "_", -1)
+		newname = strings.Replace(newname, ".", "_", -1)
+		newname = "z_" + newname + ".c"
 
 		ioutil.WriteFile(newname, []byte(fmt.Sprintf(
-			`// Copyright 2014 <chaishushan{AT}gmail.com>. All rights reserved.
+			`// Copyright 2022 <chaishushan{AT}gmail.com>. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -58,7 +69,7 @@ func genIncludeFiles() {
 
 // +build cgo
 
-#include "%s"
+#include "./%s"
 `, relpath,
 		)), 0666)
 
@@ -78,6 +89,8 @@ func printOldGenFiles() {
 }
 
 func parseCMakeListsTxt(filename, varname, ext string) (ss []string) {
+	cmakefileDir := filepath.Dir(filename)
+
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		log.Fatal(err)
@@ -95,29 +108,21 @@ func parseCMakeListsTxt(filename, varname, ext string) (ss []string) {
 		}
 	}
 
-	// read parse_makefile_am(${varname}, end with `)`
-	prefix := fmt.Sprintf("parse_makefile_am(${%s}/", varname)
-	baseDir := filepath.Join(filepath.Dir(filename), "src")
+	// read $varname, end with `)`
 	for {
 		line, _, err := br.ReadLine()
 		if err != nil {
 			log.Fatal(err)
 		}
-		s := string(line)
-		if !strings.HasPrefix(s, prefix) {
+		if strings.HasPrefix(string(line), ")") {
 			break
 		}
-		subdir := strings.Split(s, " ")[0][len(prefix):]
-		dir := filepath.Join(baseDir, subdir)
-		sf, err := findFiles(dir, ext)
-		if err != nil {
-			log.Fatal(err)
+		switch v := strings.TrimSpace(string(line)); {
+		case strings.HasPrefix(v, `${`): // parse ${?}
+			ss = append(ss, parseCMakeListsTxt(filename, v[2:len(v)-3], ext)...)
+		case strings.HasSuffix(v, ext): // *.ext
+			ss = append(ss, filepath.Join(cmakefileDir, v))
 		}
-		ss = append(ss, sf...)
 	}
 	return
-}
-
-func findFiles(dir, ext string) ([]string, error) {
-	return filepath.Glob(fmt.Sprintf("%s/%s", dir, ext))
 }

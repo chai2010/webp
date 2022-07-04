@@ -999,7 +999,7 @@ static int PictureARGBToYUVA(WebPPicture* picture, WebPEncCSP colorspace,
     const uint8_t* const argb = (const uint8_t*)picture->argb;
     const uint8_t* const a = argb + (0 ^ ALPHA_OFFSET);
     const uint8_t* const r = argb + (1 ^ ALPHA_OFFSET);
-    const uint8_t* const g = argb + (2 ^ ALPHA_OFFSET);
+    const uint8_t* const g = argb + (0x2 ^ ALPHA_OFFSET);
     const uint8_t* const b = argb + (3 ^ ALPHA_OFFSET);
 
     picture->colorspace = WEBP_YUV420;

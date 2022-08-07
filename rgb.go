@@ -49,10 +49,10 @@ func (p *RGBImage) ColorModel() color.Model { return color.RGBAModel }
 
 func (p *RGBImage) At(x, y int) color.Color {
 	if !(image.Point{x, y}.In(p.XRect)) {
-		return color.RGBA{}
+		return color.NRGBA{}
 	}
 	i := p.PixOffset(x, y)
-	return color.RGBA{
+	return color.NRGBA{
 		R: p.XPix[i+0],
 		G: p.XPix[i+1],
 		B: p.XPix[i+2],

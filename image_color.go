@@ -38,7 +38,7 @@ func (c MemPColor) RGBA() (r, g, b, a uint32) {
 	case 2:
 		switch reflect.Kind(c.DataType) {
 		case reflect.Uint8:
-			return color.RGBA{
+			return color.NRGBA{
 				R: c.Pix[0],
 				G: c.Pix[1],
 				B: 0xFF,
@@ -62,7 +62,7 @@ func (c MemPColor) RGBA() (r, g, b, a uint32) {
 	case 3:
 		switch reflect.Kind(c.DataType) {
 		case reflect.Uint8:
-			return color.RGBA{
+			return color.NRGBA{
 				R: c.Pix[0],
 				G: c.Pix[1],
 				B: c.Pix[2],
@@ -86,7 +86,7 @@ func (c MemPColor) RGBA() (r, g, b, a uint32) {
 	case 4:
 		switch reflect.Kind(c.DataType) {
 		case reflect.Uint8:
-			return color.RGBA{
+			return color.NRGBA{
 				R: c.Pix[0],
 				G: c.Pix[1],
 				B: c.Pix[2],

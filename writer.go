@@ -114,7 +114,7 @@ func adjustImage(m image.Image) image.Image {
 		case p.XChannels == 3 && p.XDataType == reflect.Uint16:
 			m = NewRGBImageFrom(m) // MemP is little endian
 		case p.XChannels == 4 && p.XDataType == reflect.Uint8:
-			m = &image.RGBA{
+			m = &image.NRGBA{
 				Pix:    p.XPix,
 				Stride: p.XStride,
 				Rect:   p.XRect,

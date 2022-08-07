@@ -70,7 +70,7 @@ func ExampleColor_uint16() {
 }
 
 func ExampleColorModel() {
-	rgba := color.RGBA{R: 101, G: 102, B: 103, A: 104}
+	rgba := color.NRGBA{R: 101, G: 102, B: 103, A: 104}
 	c := ColorModel(4, reflect.Uint8).Convert(rgba).(MemPColor)
 	fmt.Printf("c = %v\n", c)
 	// Output:

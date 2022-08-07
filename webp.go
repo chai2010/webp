@@ -53,7 +53,7 @@ func DecodeRGBA(data []byte) (m *image.RGBA, err error) {
 	if err != nil {
 		return
 	}
-	m = &image.RGBA{
+	m = &image.NRGBA{
 		Pix:    pix,
 		Stride: 4 * w,
 		Rect:   image.Rect(0, 0, w, h),
@@ -97,7 +97,7 @@ func DecodeRGBAToSize(data []byte, width, height int) (m *image.RGBA, err error)
 	if err != nil {
 		return
 	}
-	m = &image.RGBA{
+	m = &image.NRGBA{
 		Pix:    pix,
 		Stride: 4 * width,
 		Rect:   image.Rect(0, 0, width, height),

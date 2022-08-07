@@ -315,7 +315,7 @@ func (p *MemPImage) AsStdImage() (m image.Image, ok bool) {
 			Rect:   p.XRect,
 		}, true
 	case p.XChannels == 4 && p.XDataType == reflect.Uint8:
-		return &image.RGBA{
+		return &image.NRGBA{
 			Pix:    p.XPix,
 			Stride: p.XStride,
 			Rect:   p.XRect,
@@ -345,7 +345,7 @@ func (p *MemPImage) StdImage() image.Image {
 		}
 		return m
 	case p.XChannels == 4 && p.XDataType == reflect.Uint8:
-		return &image.RGBA{
+		return &image.NRGBA{
 			Pix:    p.XPix,
 			Stride: p.XStride,
 			Rect:   p.XRect,

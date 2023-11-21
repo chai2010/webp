@@ -13,7 +13,7 @@ Install
 Install `GCC` or `MinGW` (http://tdm-gcc.tdragon.net/download) at first,
 and then run these commands:
 
-	1. `go get github.com/chai2010/webp`
+	1. `go get github.com/cqzcqq/webp`
 	2. `go run hello.go`
 
 Examples
@@ -28,7 +28,7 @@ This is a simple example:
 		"io/ioutil"
 		"log"
 
-		"github.com/chai2010/webp"
+		"github.com/cqzcqq/webp"
 	)
 
 	func main() {

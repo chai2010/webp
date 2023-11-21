@@ -91,7 +91,7 @@ import (
 	"io/ioutil"
 	"testing"
 
-	chai2010_webp "github.com/chai2010/webp"
+	chai2010_webp "github.com/cqzcqq/webp"
 	x_image_webp "golang.org/x/image/webp"
 )
 

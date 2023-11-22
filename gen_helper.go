@@ -39,12 +39,14 @@ func clearOldGenFiles() {
 }
 
 func genIncludeFiles() {
-	ss := parseCMakeListsTxt("internal/libwebp-1.3.2/CMakeLists.txt", "WEBP_SRC_DIR", "*.c")
+	ss := parseCMakeListsTxt("internal/libwebp-1.3.2/CMakeLists.txt", "WEBP_SRC_DIR", "*.c", true)
+	sharpyuvss := parseCMakeListsTxt("internal/libwebp-1.3.2/CMakeLists.txt", "WEBP_SHARPYUV_SRC", "*.c", false)
 	muxSS, err := findFiles("internal/libwebp-1.3.2/src/mux", "*.c")
 	if err != nil {
 		log.Fatal(err)
 	}
 	ss = append(ss, muxSS...)
+	ss = append(ss, sharpyuvss...)
 	for i := 0; i < len(ss); i++ {
 		relpath := ss[i][23:] // drop `./`
 		newname := "z_libwebp_" + strings.Replace(relpath, "/", "_", -1)
@@ -77,7 +79,7 @@ func printOldGenFiles() {
 	fmt.Printf("Total %d\n", len(oldGenFiles))
 }
 
-func parseCMakeListsTxt(filename, varname, ext string) (ss []string) {
+func parseCMakeListsTxt(filename, varname, ext string, is_src_file bool) (ss []string) {
 	data, err := ioutil.ReadFile(filename)
 	if err != nil {
 		log.Fatal(err)
@@ -97,7 +99,11 @@ func parseCMakeListsTxt(filename, varname, ext string) (ss []string) {
 
 	// read parse_makefile_am(${varname}, end with `)`
 	prefix := fmt.Sprintf("parse_makefile_am(${%s}/", varname)
-	baseDir := filepath.Join(filepath.Dir(filename), "src")
+	baseDir := filepath.Join(filepath.Dir(filename), "")
+	if is_src_file {
+	    baseDir = filepath.Join(filepath.Dir(filename), "src")
+	}
+
 	for {
 		line, _, err := br.ReadLine()
 		if err != nil {

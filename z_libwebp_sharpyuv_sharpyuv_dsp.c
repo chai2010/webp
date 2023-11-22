@@ -6,4 +6,4 @@
 
 // +build cgo
 
-#include "src/sharpyuv/sharpyuv_neon.c"
+#include "sharpyuv/sharpyuv_dsp.c"

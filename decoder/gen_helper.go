@@ -39,16 +39,16 @@ func clearOldGenFiles() {
 }
 
 func genIncludeFiles() {
-	ss := parseCMakeListsTxt("internal/libwebp-1.3.2/CMakeLists.txt", "WEBP_SRC_DIR", "*.c", true)
-	sharpyuvss := parseCMakeListsTxt("internal/libwebp-1.3.2/CMakeLists.txt", "WEBP_SHARPYUV_SRC", "*.c", false)
-	muxSS, err := findFiles("internal/libwebp-1.3.2/src/mux", "*.c")
+	ss := parseCMakeListsTxt("../internal/libwebp-1.3.2/CMakeLists.txt", "WEBP_SRC_DIR", "*.c", true)
+	sharpyuvss := parseCMakeListsTxt("../internal/libwebp-1.3.2/CMakeLists.txt", "WEBP_SHARPYUV_SRC", "*.c", false)
+	muxSS, err := findFiles("../internal/libwebp-1.3.2/src/mux", "*.c")
 	if err != nil {
 		log.Fatal(err)
 	}
 	ss = append(ss, muxSS...)
 	ss = append(ss, sharpyuvss...)
 	for i := 0; i < len(ss); i++ {
-		relpath := ss[i][23:] // drop `./`
+		relpath := ss[i][26:] // drop `./`
 		newname := "z_libwebp_" + strings.Replace(relpath, "/", "_", -1)
 		content := []byte(fmt.Sprintf(
 			`// Copyright 2014 <chaishushan{AT}gmail.com>. All rights reserved.

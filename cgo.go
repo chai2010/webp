@@ -4,6 +4,7 @@
 
 package webp
 
+// #cgo CFLAGS: -Wno-xor-used-as-pow
 //#include "webp.h"
 import "C"
 import "unsafe"

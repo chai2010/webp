@@ -105,18 +105,7 @@ if err != nil {
 }
 ```
 
-Notes
-=====
+Give a Star! ⭐
+===============
 
-Change the libwebp to fast method:
-
-	internal/libwebp/src/enc/config.c
-	WebPConfigInitInternal
-	config->method = 0; // 4;
-
-BUGS
-====
-
-Report bugs to <chaishushan@gmail.com>.
-
-Thanks!
+If you like project, please give it a star. Thanks!

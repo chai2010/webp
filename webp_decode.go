@@ -2,9 +2,6 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-//go:build ignore
-// +build ignore
-
 package webp
 
 //#include <webp/decode.h>
@@ -12,7 +9,7 @@ import "C"
 import "unsafe"
 
 const (
-	WEBP_DECODER_ABI_VERSION = 0x0203 // MAJOR(8b) + MINOR(8b)
+	WEBP_DECODER_ABI_VERSION = 0x0209 // MAJOR(8b) + MINOR(8b)
 )
 
 const (

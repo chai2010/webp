@@ -5,7 +5,7 @@
 package webp
 
 import (
-	"io/ioutil"
+	"os"
 	"testing"
 )
 
@@ -19,7 +19,7 @@ type tGetInfoTester struct {
 
 func TestGetInfo(t *testing.T) {
 	for i, v := range tGetInfoTesterList {
-		data, err := ioutil.ReadFile(testdataDir + v.Filename)
+		data, err := os.ReadFile(testdataDir + v.Filename)
 		if err != nil {
 			t.Fatalf("%d: %v", i, err)
 		}

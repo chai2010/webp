@@ -1,0 +1,54 @@
+name: webpgo
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+      - "releases/*"
+jobs:
+  build-and-test-ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17
+
+      - run: go version
+      - run: go env
+      - run: go test ./...
+
+  build-and-test-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17
+
+      - run: go version
+      - run: go env
+      - run: go test ./...
+
+  build-and-test-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Git checkout
+        uses: actions/checkout@v2
+
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.17
+
+      - run: go version
+      - run: go env
+      - run: go test ./...
+

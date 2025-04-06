@@ -1,8 +1,3 @@
-- *Go语言QQ群: 102319854, 1055927514*
-- *凹语言(凹读音“Wa”)(The Wa Programming Language): https://github.com/wa-lang/wa*
-
-----
-
 webp
 =====
 
@@ -15,8 +10,11 @@ webp
  ╚══╝╚══╝ ╚══════╝╚═════╝ ╚═╝
 ```
 
-[![Build Status](https://travis-ci.org/chai2010/webp.svg)](https://travis-ci.org/chai2010/webp)
-[![GoDoc](https://godoc.org/github.com/chai2010/webp?status.svg)](https://godoc.org/github.com/chai2010/webp)
+
+[![Build Status](https://github.com/chai2010/webp/actions/workflows/test.yml/badge.svg)](https://github.com/chai2010/webp/actions/workflows/test.yml)
+[![GoDoc](https://godoc.org/github.com/chai2010/webp?status.svg)](https://pkg.go.dev/github.com/chai2010/webp)
+[![GitHub release](https://img.shields.io/github/v/tag/chai2010/webp.svg?label=release)](https://github.com/chai2010/webp/releases)
+[![license](https://img.shields.io/github/license/chai2010/webp.svg)](https://github.com/chai2010/webp/blob/master/LICENSE)
 
 Benchmark
 =========

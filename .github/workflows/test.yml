@@ -1,4 +1,4 @@
-name: webpgo
+name: webp
 on:
   pull_request:
   push:
@@ -33,8 +33,14 @@ jobs:
         with:
           go-version: 1.17
 
+      - name: Install MinGW
+        run: |
+          choco install mingw
+          echo "MINGW installation complete"
+
       - run: go version
       - run: go env
+      - run: mingw32-make --version
       - run: go test ./...
 
   build-and-test-macos:

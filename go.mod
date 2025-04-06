@@ -2,8 +2,8 @@
 // Use of this source code is governed by a Apache-style
 // license that can be found in the LICENSE file.
 
-module github.com/chai2010/webp
+module github.com/jackmordaunt/webp
 
-go 1.17
+go 1.21
 
 require golang.org/x/image v0.0.0-20211028202545-6944b10bf410

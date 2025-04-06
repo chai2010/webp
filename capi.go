@@ -20,6 +20,7 @@ package webp
 #cgo CFLAGS: -I./internal/include/
 #cgo CFLAGS: -Wno-pointer-sign -DWEBP_USE_THREAD
 #cgo !windows LDFLAGS: -lm
+#cgo windows LDFLAGS: -lmsvcrt -lm
 
 #include "webp.h"
 
